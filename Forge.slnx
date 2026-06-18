@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Forge.Api/Forge.Api.csproj" />
+  <Project Path="Forge.Domain/Forge.Domain.csproj" />
+  <Project Path="Forge.Infrastructure/Forge.Infrastructure.csproj" />
+  <Project Path="Forge.Tests/Forge.Tests.csproj" />
+</Solution>
