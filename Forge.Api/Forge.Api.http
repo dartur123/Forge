@@ -1,6 +1,18 @@
-@Forge.Api_HostAddress = http://localhost:5025
+@Forge.Api_HostAddress = https://localhost:7085
 
-GET {{Forge.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Get all materials
+GET {{Forge.Api_HostAddress}}/api/materials
 
-###
+### Create a material
+POST {{Forge.Api_HostAddress}}/api/materials
+Content-Type: application/json
+
+{
+  "sku": "RM-001",
+  "name": "Steel Sheet 2mm",
+  "type": 0,
+  "unitOfMeasure": "kg"
+}
+
+### Get material by id
+GET {{Forge.Api_HostAddress}}/api/materials/1

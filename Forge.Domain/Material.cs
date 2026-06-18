@@ -1,0 +1,17 @@
+﻿namespace Forge.Domain;
+
+public enum MaterialType
+{
+    Raw,
+    WorkInProgress,
+    FinishedGood
+}
+
+public class Material
+{
+    public int Id { get; set; }
+    public string Sku { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public MaterialType Type { get; set; }
+    public string UnitOfMeasure { get; set; } = string.Empty;
+}
