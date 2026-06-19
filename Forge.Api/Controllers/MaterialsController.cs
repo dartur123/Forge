@@ -1,4 +1,5 @@
-﻿using Forge.Domain;
+﻿using Forge.Api.DTOs.Materials;
+using Forge.Domain;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Forge.Api.Controllers;
@@ -7,53 +8,67 @@ namespace Forge.Api.Controllers;
 [Route("api/[controller]")]
 public class MaterialsController : ControllerBase
 {
-    // Temporary in-memory "database" — just a list living in memory.
-    // It resets every time you stop and restart the app. Real database comes in Week 2.
     private static readonly List<Material> Materials = new();
     private static int _nextId = 1;
 
     [HttpGet]
-    public ActionResult<List<Material>> GetAll()
+    public ActionResult<List<MaterialResponse>> GetAll()
     {
-        return Ok(Materials);
-    }
-
-    [HttpGet("by-type/{type}")]
-    public ActionResult<List<Material>> GetByType(MaterialType type)
-    {
-        var filtered = Materials.Where(m => m.Type == type).ToList();
-        return Ok(filtered);
+        var response = Materials.Select(ToResponse).ToList();
+        return Ok(response);
     }
 
     [HttpGet("{id}")]
-    public ActionResult<Material> GetById(int id)
+    public ActionResult<MaterialResponse> GetById(int id)
     {
         var material = Materials.FirstOrDefault(m => m.Id == id);
         if (material is null)
             return NotFound();
 
-        return Ok(material);
+        return Ok(ToResponse(material));
+    }
+
+    [HttpGet("by-type/{type}")]
+    public ActionResult<List<MaterialResponse>> GetByType(MaterialType type)
+    {
+        var filtered = Materials
+            .Where(m => m.Type == type)
+            .Select(ToResponse)
+            .ToList();
+
+        return Ok(filtered);
     }
 
     [HttpPost]
-    public ActionResult<Material> Create(Material material)
+    public ActionResult<MaterialResponse> Create(CreateMaterialRequest request)
     {
-        material.Id = _nextId++;
+        var material = new Material
+        {
+            Id = _nextId++,
+            Sku = request.Sku,
+            Name = request.Name,
+            Type = request.Type,
+            Description = request.Description,
+            UnitOfMeasure = request.UnitOfMeasure
+        };
+
         Materials.Add(material);
-        return CreatedAtAction(nameof(GetById), new { id = material.Id }, material);
+        return CreatedAtAction(nameof(GetById),
+            new { id = material.Id }, ToResponse(material));
     }
 
     [HttpPut("{id}")]
-    public IActionResult Update(int id, Material updated)
+    public IActionResult Update(int id, CreateMaterialRequest request)
     {
         var existing = Materials.FirstOrDefault(m => m.Id == id);
         if (existing is null)
             return NotFound();
 
-        existing.Sku = updated.Sku;
-        existing.Name = updated.Name;
-        existing.Type = updated.Type;
-        existing.UnitOfMeasure = updated.UnitOfMeasure;
+        existing.Sku = request.Sku;
+        existing.Name = request.Name;
+        existing.Type = request.Type;
+        existing.Description = request.Description;
+        existing.UnitOfMeasure = request.UnitOfMeasure;
 
         return NoContent();
     }
@@ -68,4 +83,15 @@ public class MaterialsController : ControllerBase
         Materials.Remove(material);
         return NoContent();
     }
+
+    // Private helper — converts a Material entity to a MaterialResponse DTO
+    private static MaterialResponse ToResponse(Material material) => new()
+    {
+        Id = material.Id,
+        Sku = material.Sku,
+        Name = material.Name,
+        Type = material.Type.ToString(),
+        Description = material.Description,
+        UnitOfMeasure = material.UnitOfMeasure
+    };
 }

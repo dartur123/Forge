@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Forge.Domain;
+﻿namespace Forge.Domain;
 
 public enum MaterialType
 {
@@ -12,14 +10,9 @@ public enum MaterialType
 public class Material
 {
     public int Id { get; set; }
-    [Required]
-    [MinLength(1)]
     public string Sku { get; set; } = string.Empty;
-    [Required]
-    [MinLength(1)]
     public string Name { get; set; } = string.Empty;
     public MaterialType Type { get; set; }
-    [Required]
-    [MinLength(1)]
+    public string? Description { get; set; }
     public string UnitOfMeasure { get; set; } = string.Empty;
 }
