@@ -16,3 +16,17 @@ Content-Type: application/json
 
 ### Get material by id
 GET {{Forge.Api_HostAddress}}/api/materials/1
+
+### Get material by material type
+GET {{Forge.Api_HostAddress}}/api/materials/by-type/0
+
+### Try to create invalid material
+POST {{Forge.Api_HostAddress}}/api/materials
+Content-Type: application/json
+
+{
+  "sku": "",
+  "name": "",
+  "type": 0,
+  "unitOfMeasure": ""
+}

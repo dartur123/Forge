@@ -18,6 +18,13 @@ public class MaterialsController : ControllerBase
         return Ok(Materials);
     }
 
+    [HttpGet("by-type/{type}")]
+    public ActionResult<List<Material>> GetByType(MaterialType type)
+    {
+        var filtered = Materials.Where(m => m.Type == type).ToList();
+        return Ok(filtered);
+    }
+
     [HttpGet("{id}")]
     public ActionResult<Material> GetById(int id)
     {
