@@ -21,5 +21,18 @@ agent that respects how *your* company actually works.
 - Azure OpenAI + RAG (coming Phase 3)
 - Microsoft Agent Framework (coming Phase 4)
 
+## Domain Model
+- Material (with lot/batch tracking)
+- Supplier & Subcontractor
+- Location (Warehouse, Production Floor, FG Storage)
+- Lot (batch tracking with PHP costing)
+- Stock Movement (append-only ledger)
+- Purchase Order + Lines (with multi-currency for overseas)
+- Subcon Order + Lines (with multi-currency for overseas)
+- Bill of Materials (recursive, multi-level)
+- Approval Rules (configurable per company)
+- Company Settings (costing method, base currency)
+- Users + Roles
+
 ## Status
 🚧 Phase 1 — Backend in progress
