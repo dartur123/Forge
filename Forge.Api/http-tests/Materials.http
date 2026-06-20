@@ -1,0 +1,43 @@
+### Get all materials
+GET {{Forge.Api_HostAddress}}/api/materials
+
+### Create a material with description
+POST {{Forge.Api_HostAddress}}/api/materials
+Content-Type: application/json
+
+{
+  "sku": "RM-001",
+  "name": "Steel Sheet 2mm",
+  "description": "Sample Description",
+  "type": 0,
+  "unitOfMeasure": "kg"
+}
+
+### Create a material without description
+POST {{Forge.Api_HostAddress}}/api/materials
+Content-Type: application/json
+
+{
+  "sku": "RM-001",
+  "name": "Steel Sheet 2mm",
+  "description": null,
+  "type": 0,
+  "unitOfMeasure": "kg"
+}
+
+### Get material by id
+GET {{Forge.Api_HostAddress}}/api/materials/1
+
+### Get material by material type
+GET {{Forge.Api_HostAddress}}/api/materials/by-type/0
+
+### Try to create invalid material
+POST {{Forge.Api_HostAddress}}/api/materials
+Content-Type: application/json
+
+{
+  "sku": "",
+  "name": "",
+  "type": 0,
+  "unitOfMeasure": ""
+}
