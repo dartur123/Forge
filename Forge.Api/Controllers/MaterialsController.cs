@@ -1,7 +1,9 @@
 ﻿using Forge.Api.DTOs.Materials;
 using Forge.Domain;
 using Forge.Domain.Enums;
+using Forge.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Forge.Api.Controllers;
 
@@ -9,20 +11,24 @@ namespace Forge.Api.Controllers;
 [Route("api/[controller]")]
 public class MaterialsController : ControllerBase
 {
-    private static readonly List<Material> Materials = new();
-    private static int _nextId = 1;
+    private readonly ForgeDbContext _context;
+
+    public MaterialsController(ForgeDbContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
-    public ActionResult<List<MaterialResponse>> GetAll()
+    public async Task<ActionResult<List<MaterialResponse>>> GetAll()
     {
-        var response = Materials.Select(ToResponse).ToList();
-        return Ok(response);
+        var materials = await _context.Materials.ToListAsync();
+        return Ok(materials.Select(ToResponse).ToList());
     }
 
     [HttpGet("{id}")]
-    public ActionResult<MaterialResponse> GetById(int id)
+    public async Task<ActionResult<MaterialResponse>> GetById(int id)
     {
-        var material = Materials.FirstOrDefault(m => m.Id == id);
+        var material = await _context.Materials.FindAsync(id);
         if (material is null)
             return NotFound();
 
@@ -30,22 +36,20 @@ public class MaterialsController : ControllerBase
     }
 
     [HttpGet("by-type/{type}")]
-    public ActionResult<List<MaterialResponse>> GetByType(MaterialType type)
+    public async Task<ActionResult<List<MaterialResponse>>> GetByType(MaterialType type)
     {
-        var filtered = Materials
+        var filtered = await _context.Materials
             .Where(m => m.Type == type)
-            .Select(ToResponse)
-            .ToList();
+            .ToListAsync();
 
-        return Ok(filtered);
+        return Ok(filtered.Select(ToResponse).ToList());
     }
 
     [HttpPost]
-    public ActionResult<MaterialResponse> Create(CreateMaterialRequest request)
+    public async Task<ActionResult<MaterialResponse>> Create(CreateMaterialRequest request)
     {
         var material = new Material
         {
-            Id = _nextId++,
             Sku = request.Sku,
             Name = request.Name,
             Type = request.Type,
@@ -53,15 +57,17 @@ public class MaterialsController : ControllerBase
             UnitOfMeasure = request.UnitOfMeasure
         };
 
-        Materials.Add(material);
+        _context.Materials.Add(material);
+        await _context.SaveChangesAsync();
+
         return CreatedAtAction(nameof(GetById),
             new { id = material.Id }, ToResponse(material));
     }
 
     [HttpPut("{id}")]
-    public IActionResult Update(int id, CreateMaterialRequest request)
+    public async Task<IActionResult> Update(int id, CreateMaterialRequest request)
     {
-        var existing = Materials.FirstOrDefault(m => m.Id == id);
+        var existing = await _context.Materials.FindAsync(id);
         if (existing is null)
             return NotFound();
 
@@ -71,21 +77,23 @@ public class MaterialsController : ControllerBase
         existing.Description = request.Description;
         existing.UnitOfMeasure = request.UnitOfMeasure;
 
+        await _context.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        var material = Materials.FirstOrDefault(m => m.Id == id);
+        var material = await _context.Materials.FindAsync(id);
         if (material is null)
             return NotFound();
 
-        Materials.Remove(material);
+        _context.Materials.Remove(material);
+        await _context.SaveChangesAsync();
+
         return NoContent();
     }
 
-    // Private helper — converts a Material entity to a MaterialResponse DTO
     private static MaterialResponse ToResponse(Material material) => new()
     {
         Id = material.Id,

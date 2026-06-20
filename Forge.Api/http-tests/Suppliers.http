@@ -1,1 +1,17 @@
-# For more info on HTTP files go to https://aka.ms/vs/httpfile
+### Get all suppliers
+GET {{Forge.Api_HostAddress}}/api/suppliers
+
+### Create a supplier with all fields fulfilled
+POST {{Forge.Api_HostAddress}}/api/suppliers
+Content-Type: application/json
+
+{
+  "name": "Supplier1",
+  "currency": "PHP",
+  "contactperson": "Sample Description",
+  "contactemail": "sampleemail@gmail.com",
+  "unitOfMeasure": "09691234567"
+}
+
+### Get material by id
+GET {{Forge.Api_HostAddress}}/api/materials/1
