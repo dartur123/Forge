@@ -1,0 +1,10 @@
+### Get all materials
+GET {{Forge.Api_HostAddress}}/api/locationtypes
+
+### Create a material with description
+POST {{Forge.Api_HostAddress}}/api/locationtypes
+Content-Type: application/json
+
+{
+  "name": "Warehouse"
+}
