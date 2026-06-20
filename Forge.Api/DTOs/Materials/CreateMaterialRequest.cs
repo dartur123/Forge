@@ -1,4 +1,4 @@
-﻿using Forge.Domain;
+﻿using Forge.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Forge.Api.DTOs.Materials

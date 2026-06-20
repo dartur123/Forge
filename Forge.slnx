@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="docker-compose.yml" />
+  </Folder>
   <Project Path="Forge.Api/Forge.Api.csproj" />
   <Project Path="Forge.Domain/Forge.Domain.csproj" />
   <Project Path="Forge.Infrastructure/Forge.Infrastructure.csproj" />

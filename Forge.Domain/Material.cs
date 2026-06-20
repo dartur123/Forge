@@ -1,11 +1,6 @@
-﻿namespace Forge.Domain;
+﻿using Forge.Domain.Enums;
 
-public enum MaterialType
-{
-    Raw,
-    WorkInProgress,
-    FinishedGood
-}
+namespace Forge.Domain;
 
 public class Material
 {

@@ -1,5 +1,6 @@
 ﻿using Forge.Api.DTOs.Materials;
 using Forge.Domain;
+using Forge.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Forge.Api.Controllers;
