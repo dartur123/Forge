@@ -3,6 +3,7 @@ using System;
 using Forge.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Forge.Infrastructure.Migrations
 {
     [DbContext(typeof(ForgeDbContext))]
-    partial class ForgeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260621005530_AddLocationTypeIsActive")]
+    partial class AddLocationTypeIsActive
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -193,8 +196,6 @@ namespace Forge.Infrastructure.Migrations
 
                     b.HasIndex("LocationTypeId");
 
-                    b.HasIndex("ParentLocationId");
-
                     b.ToTable("Locations");
                 });
 
@@ -207,9 +208,7 @@ namespace Forge.Infrastructure.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -582,13 +581,7 @@ namespace Forge.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Forge.Domain.Location", "ParentLocation")
-                        .WithMany()
-                        .HasForeignKey("ParentLocationId");
-
                     b.Navigation("LocationType");
-
-                    b.Navigation("ParentLocation");
                 });
 
             modelBuilder.Entity("Forge.Domain.PurchaseOrderLine", b =>

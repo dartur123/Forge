@@ -63,8 +63,10 @@ namespace Forge.Api.Controllers
             var locationType = await _context.LocationTypes.FindAsync(id);
             if (locationType is null)
                 return NotFound();
-            _context.LocationTypes.Remove(locationType);
+
+            locationType.IsActive = false;
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
 

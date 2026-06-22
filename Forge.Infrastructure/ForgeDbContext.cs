@@ -31,9 +31,19 @@ public class ForgeDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<BillOfMaterialsLine>()
-            .HasOne<BillOfMaterialsLine>()
-            .WithMany(line => line.Children)
-            .HasForeignKey(line => line.ParentLineId)
-            .OnDelete(DeleteBehavior.Restrict);
+                    .HasOne<BillOfMaterialsLine>()
+                    .WithMany(line => line.Children)
+                    .HasForeignKey(line => line.ParentLineId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Location>()
+                    .HasOne(l => l.LocationType)
+                    .WithMany(lt => lt.Locations)
+                    .HasForeignKey(l => l.LocationTypeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<LocationType>()
+                    .Property(lt => lt.IsActive)
+                    .HasDefaultValue(true);
     }
 }

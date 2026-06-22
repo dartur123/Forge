@@ -1,0 +1,21 @@
+### Get all locations
+GET {{Forge.Api_HostAddress}}/api/locations
+
+### Create a simple location
+POST {{Forge.Api_HostAddress}}/api/locations
+Content-Type: application/json
+
+{
+  "name": "Warehouse A",
+  "locationTypeId": 1
+}
+
+### Create a simple location with parent
+POST {{Forge.Api_HostAddress}}/api/locations
+Content-Type: application/json
+
+{
+  "name": "Rack 1",
+  "locationTypeId": 1,
+  "parentLocationId": 1
+}
