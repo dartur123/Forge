@@ -71,7 +71,7 @@ public class SuppliersController : ControllerBase
         var supplier = await _context.Suppliers.FindAsync(id);
         if (supplier is null)
             return NotFound();
-        _context.Suppliers.Remove(supplier);
+        supplier.IsActive = false;
         await _context.SaveChangesAsync();
         return NoContent();
     }
@@ -83,7 +83,8 @@ public class SuppliersController : ControllerBase
         Currency = supplier.Currency,
         ContactPhone = supplier.ContactPhone,
         ContactPerson = supplier.ContactPerson,
-        ContactEmail = supplier.ContactEmail
+        ContactEmail = supplier.ContactEmail,
+        IsActive = supplier.IsActive
     };
 }
 

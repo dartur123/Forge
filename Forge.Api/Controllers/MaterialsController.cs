@@ -88,7 +88,7 @@ public class MaterialsController : ControllerBase
         if (material is null)
             return NotFound();
 
-        _context.Materials.Remove(material);
+        material.IsActive = false;
         await _context.SaveChangesAsync();
 
         return NoContent();
@@ -101,6 +101,7 @@ public class MaterialsController : ControllerBase
         Name = material.Name,
         Type = material.Type.ToString(),
         Description = material.Description,
-        UnitOfMeasure = material.UnitOfMeasure
+        UnitOfMeasure = material.UnitOfMeasure,
+        IsActive = material.IsActive
     };
 }

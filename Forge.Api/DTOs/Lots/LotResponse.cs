@@ -18,7 +18,7 @@ namespace Forge.Api.DTOs.Lots
         public decimal TotalCost { get; set; }
         public DateTime ReceivedDate { get; set; }
         public DateTime? ExpiryDate { get; set; }
-        public LotStatus Status { get; set; }
+        public string Status { get; set; }
         public bool IsActive { get; set; }
 
         public static LotResponse FromEntity(Lot lot) => new()
@@ -37,7 +37,7 @@ namespace Forge.Api.DTOs.Lots
             TotalCost = lot.TotalCostPhp,
             ReceivedDate = lot.ReceivedDate,
             ExpiryDate = lot.ExpiryDate,
-            Status = lot.Status,
+            Status = lot.Status.ToString(),
             IsActive = lot.IsActive
         };
     }
