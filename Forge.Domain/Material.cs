@@ -10,4 +10,6 @@ public class Material
     public MaterialType Type { get; set; }
     public string? Description { get; set; }
     public string UnitOfMeasure { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public List<Lot> Lots { get; set; } = new();
 }

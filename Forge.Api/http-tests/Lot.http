@@ -1,0 +1,68 @@
+### Get all lots
+GET {{Forge.Api_HostAddress}}/api/lots
+
+### Get lot by id
+GET {{Forge.Api_HostAddress}}/api/lots/1
+
+### Create a lot with supplier
+POST {{Forge.Api_HostAddress}}/api/lots
+Content-Type: application/json
+
+{
+  "lotNumber": "LOT-2024-001",
+  "materialId": 1,
+  "supplierId": 1,
+  "quantity": 500,
+  "unitCostPhp": 45.00
+}
+
+### Create a lot without supplier (internally produced)
+POST {{Forge.Api_HostAddress}}/api/lots
+Content-Type: application/json
+
+{
+  "lotNumber": "LOT-2024-002",
+  "materialId": 1,
+  "quantity": 200,
+  "unitCostPhp": 38.50
+}
+
+### Create a lot with location and expiry
+POST {{Forge.Api_HostAddress}}/api/lots
+Content-Type: application/json
+
+{
+  "lotNumber": "LOT-2024-003",
+  "materialId": 1,
+  "supplierId": 1,
+  "currentLocationId": 1,
+  "quantity": 100,
+  "unitCostPhp": 50.00,
+  "expiryDate": "2025-12-31T00:00:00Z"
+}
+
+### Update a lot
+PUT {{Forge.Api_HostAddress}}/api/lots/1
+Content-Type: application/json
+
+{
+  "lotNumber": "LOT-2024-001-REVISED",
+  "materialId": 1,
+  "supplierId": 1,
+  "quantity": 450,
+  "unitCostPhp": 45.00
+}
+
+### Archive a lot (soft delete)
+DELETE {{Forge.Api_HostAddress}}/api/lots/1
+
+### Try invalid lot (zero quantity)
+POST {{Forge.Api_HostAddress}}/api/lots
+Content-Type: application/json
+
+{
+  "lotNumber": "LOT-INVALID",
+  "materialId": 1,
+  "quantity": 0,
+  "unitCostPhp": 45.00
+}

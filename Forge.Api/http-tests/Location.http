@@ -1,6 +1,9 @@
 ### Get all locations
 GET {{Forge.Api_HostAddress}}/api/locations
 
+### Get location tree
+GET {{Forge.Api_HostAddress}}/api/locations/tree
+
 ### Create a simple location
 POST {{Forge.Api_HostAddress}}/api/locations
 Content-Type: application/json

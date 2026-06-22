@@ -8,4 +8,6 @@ public class Supplier
     public string? ContactPerson { get; set; }
     public string? ContactEmail { get; set; }
     public string? ContactPhone { get; set; }
+    public bool IsActive { get; set; } = true;
+    public List<Lot> Lots { get; set; } = new();
 }

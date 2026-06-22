@@ -17,6 +17,35 @@ public class LocationsController : ControllerBase
         _context = context;
     }
 
+    [HttpGet("tree")]
+    public async Task<ActionResult<List<LocationTreeNode>>> GetTree()
+    {
+        var locations = await _context.Locations
+            .Include(l => l.LocationType)
+            .ToListAsync();
+
+        var nodes = locations.ToDictionary(
+            l => l.Id,
+            l => new LocationTreeNode
+            {
+                Id = l.Id,
+                Name = l.Name,
+                Type = LocationTypeResponse.FromEntity(l.LocationType)
+            });
+
+        var roots = new List<LocationTreeNode>();
+
+        foreach (var location in locations)
+        {
+            if (location.ParentLocationId is null)
+                roots.Add(nodes[location.Id]);
+            else if (nodes.TryGetValue(location.ParentLocationId.Value, out var parent))
+                parent.Children.Add(nodes[location.Id]);
+        }
+
+        return Ok(roots);
+    }
+
     [HttpGet]
     public async Task<ActionResult<List<LocationResponse>>> GetAll()
     {

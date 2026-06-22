@@ -45,5 +45,35 @@ public class ForgeDbContext : DbContext
         modelBuilder.Entity<LocationType>()
                     .Property(lt => lt.IsActive)
                     .HasDefaultValue(true);
+
+        modelBuilder.Entity<Lot>()
+                    .HasOne(l => l.Material)
+                    .WithMany(m => m.Lots)
+                    .HasForeignKey(l => l.MaterialId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Lot>()
+                    .HasOne(l => l.Supplier)
+                    .WithMany(s => s.Lots)
+                    .HasForeignKey(l => l.SupplierId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Lot>()
+                    .HasOne(l => l.CurrentLocation)
+                    .WithMany()
+                    .HasForeignKey(l => l.CurrentLocationId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Material>()
+                    .Property(m => m.IsActive)
+                    .HasDefaultValue(true);
+
+        modelBuilder.Entity<Lot>()
+                    .Property(l => l.IsActive)
+                    .HasDefaultValue(true);
+
+        modelBuilder.Entity<Supplier>()
+                    .Property(s => s.IsActive)
+                    .HasDefaultValue(true);
     }
 }
