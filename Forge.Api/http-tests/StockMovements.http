@@ -1,0 +1,74 @@
+### Post a stock receipt from supplier
+POST {{Forge.Api_HostAddress}}/api/stockmovements
+Content-Type: application/json
+
+{
+  "lotId": 1,
+  "quantity": 100,
+  "type": 0,
+  "transactionDate": "2026-06-23T00:00:00Z",
+  "releasedByUserId": 1,
+  "jobReference": null,
+  "fromLocationId": null,
+  "toLocationId": null
+}
+
+### Post an issuance to production
+POST {{Forge.Api_HostAddress}}/api/stockmovements
+Content-Type: application/json
+
+{
+  "lotId": 1,
+  "quantity": 50,
+  "type": 3,
+  "transactionDate": "2026-06-23T00:00:00Z",
+  "releasedByUserId": 1,
+  "jobReference": "JOB-2024-042",
+  "fromLocationId": null,
+  "toLocationId": null
+}
+
+### Try to over-issue (should fail)
+POST {{Forge.Api_HostAddress}}/api/stockmovements
+Content-Type: application/json
+
+{
+  "lotId": 1,
+  "quantity": 99999,
+  "type": 3,
+  "transactionDate": "2026-06-23T00:00:00Z",
+  "releasedByUserId": 1,
+  "jobReference": "JOB-2024-099",
+  "fromLocationId": null,
+  "toLocationId": null
+}
+
+### Try zero quantity (should fail)
+POST {{Forge.Api_HostAddress}}/api/stockmovements
+Content-Type: application/json
+
+{
+  "lotId": 1,
+  "quantity": 0,
+  "type": 3,
+  "transactionDate": "2026-06-23T00:00:00Z",
+  "releasedByUserId": 1,
+  "jobReference": "JOB-2024-099",
+  "fromLocationId": null,
+  "toLocationId": null
+}
+
+### Try inactive/nonexistent lot (should fail)
+POST {{Forge.Api_HostAddress}}/api/stockmovements
+Content-Type: application/json
+
+{
+  "lotId": 9999,
+  "quantity": 10,
+  "type": 3,
+  "transactionDate": "2026-06-23T00:00:00Z",
+  "releasedByUserId": 1,
+  "jobReference": "JOB-2024-099",
+  "fromLocationId": null,
+  "toLocationId": null
+}

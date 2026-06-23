@@ -3,6 +3,7 @@
     <File Path="docker-compose.yml" />
   </Folder>
   <Project Path="Forge.Api/Forge.Api.csproj" />
+  <Project Path="Forge.Application/Forge.Application.csproj" Id="86297f38-570a-493b-a389-c384d9cea75e" />
   <Project Path="Forge.Domain/Forge.Domain.csproj" />
   <Project Path="Forge.Infrastructure/Forge.Infrastructure.csproj" />
   <Project Path="Forge.Tests/Forge.Tests.csproj" />

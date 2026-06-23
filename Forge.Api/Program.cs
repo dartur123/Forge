@@ -1,3 +1,5 @@
+using Forge.Application.Interfaces;
+using Forge.Application.Services;
 using Forge.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +12,8 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ForgeDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("ForgeDb")));
+
+builder.Services.AddScoped<IStockLedgerService, StockLedgerService>();
 
 var app = builder.Build();
 
