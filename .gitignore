@@ -11,6 +11,11 @@
 *.sln.docstates
 *.env
 
+# Environment-specific app settings (use user-secrets or env vars for credentials)
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Staging.json
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
