@@ -9,4 +9,5 @@ namespace Forge.Application.Interfaces;
 public interface IStockLedgerService
 {
     Task<StockMovementResult> PostMovementAsync(PostStockMovementRequest request);
+    Task<List<StockMovementHistoryItem>> GetLotHistoryAsync(int lotId);
 }

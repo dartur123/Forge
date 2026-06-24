@@ -1,3 +1,6 @@
+### Get lot movement history
+GET {{Forge.Api_HostAddress}}/api/stockmovements/lot/1
+
 ### Post a stock receipt from supplier
 POST {{Forge.Api_HostAddress}}/api/stockmovements
 Content-Type: application/json

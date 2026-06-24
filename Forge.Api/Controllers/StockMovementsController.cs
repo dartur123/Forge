@@ -29,5 +29,19 @@ public class StockMovementsController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpGet("lot/{lotId}")]
+    public async Task<ActionResult<List<StockMovementHistoryItem>>> GetLotHistory(int lotId)
+    {
+        try
+        {
+            var history = await _stockLedgerService.GetLotHistoryAsync(lotId);
+            return Ok(history);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }
 

@@ -95,5 +95,37 @@ public class StockLedgerService : IStockLedgerService
             throw;
         }
     }
+
+    public async Task<List<StockMovementHistoryItem>> GetLotHistoryAsync(int lotId)
+    {
+        var lotExists = await _context.Lots.AnyAsync(l => l.Id == lotId);
+        if (!lotExists)
+            throw new InvalidOperationException($"Lot {lotId} does not exist.");
+
+        var stockMovementList = await _context.StockMovements
+                                        .Include(sm => sm.Lot)
+                                        .Include(sm => sm.FromLocation)
+                                        .Include(sm => sm.ToLocation)
+                                        .Include(sm => sm.ReleasedByUser)
+                                        .Include(sm => sm.ReceivedByUser)
+                                        .Where(sm => sm.LotId == lotId)
+                                        .OrderBy(sm=> sm.Timestamp)
+                                        .ToListAsync();
+
+        return stockMovementList.Select(sm => new StockMovementHistoryItem
+        {
+            Id = sm.Id,
+            Type = sm.Type.ToString(),
+            Quantity = sm.Quantity,
+            UnitCostPhp = sm.UnitCostPhp,
+            TotalCostPhp = sm.TotalCostPhp,
+            JobReference = sm.JobReference,
+            FromLocation = sm.FromLocation is null ? null : LocationSummary.FromEntity(sm.FromLocation),
+            ToLocation = sm.ToLocation is null ? null : LocationSummary.FromEntity(sm.ToLocation),
+            ReleasedByUserId = sm.ReleasedByUserId,
+            ReceivedByUserId = sm.ReceivedByUserId,
+            Timestamp = sm.Timestamp
+        }).ToList();
+    }
 }
 

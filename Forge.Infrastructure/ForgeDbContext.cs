@@ -75,5 +75,35 @@ public class ForgeDbContext : DbContext
         modelBuilder.Entity<Supplier>()
                     .Property(s => s.IsActive)
                     .HasDefaultValue(true);
+
+        modelBuilder.Entity<StockMovement>()
+    .HasOne(sm => sm.Lot)
+    .WithMany()
+    .HasForeignKey(sm => sm.LotId)
+    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<StockMovement>()
+            .HasOne(sm => sm.FromLocation)
+            .WithMany()
+            .HasForeignKey(sm => sm.FromLocationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<StockMovement>()
+            .HasOne(sm => sm.ToLocation)
+            .WithMany()
+            .HasForeignKey(sm => sm.ToLocationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<StockMovement>()
+            .HasOne(sm => sm.ReleasedByUser)
+            .WithMany()
+            .HasForeignKey(sm => sm.ReleasedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<StockMovement>()
+            .HasOne(sm => sm.ReceivedByUser)
+            .WithMany()
+            .HasForeignKey(sm => sm.ReceivedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
