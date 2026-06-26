@@ -1,0 +1,18 @@
+### Get approval rules by entity type
+GET {{Forge.Api_HostAddress}}/api/approvalrules/PurchaseOrder
+
+### Get single rule by ID
+GET {{Forge.Api_HostAddress}}/api/approvalrules/rule/1
+
+### Create approval rule
+POST {{Forge.Api_HostAddress}}/api/approvalrules
+Content-Type: application/json
+
+{
+  "entityType": "PurchaseOrder",
+  "requiredRoleId": 1,
+  "sequenceOrder": 1
+}
+
+### Deactivate approval rule
+DELETE {{Forge.Api_HostAddress}}/api/approvalrules/rule/1

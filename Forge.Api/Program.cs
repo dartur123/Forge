@@ -19,6 +19,7 @@ builder.Services.AddDbContext<ForgeDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("ForgeDb")));
 
 builder.Services.AddScoped<IStockLedgerService, StockLedgerService>();
+builder.Services.AddScoped<IApprovalService, ApprovalService>();
 
 var app = builder.Build();
 

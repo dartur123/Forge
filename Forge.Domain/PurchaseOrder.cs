@@ -1,4 +1,6 @@
-﻿namespace Forge.Domain.Enums;
+using Forge.Domain.Enums;
+
+namespace Forge.Domain;
 
 public class PurchaseOrder
 {

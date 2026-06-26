@@ -1,5 +1,4 @@
 ﻿using Forge.Domain;
-using Forge.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Forge.Infrastructure;
@@ -77,33 +76,43 @@ public class ForgeDbContext : DbContext
                     .HasDefaultValue(true);
 
         modelBuilder.Entity<StockMovement>()
-    .HasOne(sm => sm.Lot)
-    .WithMany()
-    .HasForeignKey(sm => sm.LotId)
-    .OnDelete(DeleteBehavior.Restrict);
+                    .HasOne(sm => sm.Lot)
+                    .WithMany()
+                    .HasForeignKey(sm => sm.LotId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<StockMovement>()
-            .HasOne(sm => sm.FromLocation)
-            .WithMany()
-            .HasForeignKey(sm => sm.FromLocationId)
-            .OnDelete(DeleteBehavior.Restrict);
+                    .HasOne(sm => sm.FromLocation)
+                    .WithMany()
+                    .HasForeignKey(sm => sm.FromLocationId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<StockMovement>()
-            .HasOne(sm => sm.ToLocation)
-            .WithMany()
-            .HasForeignKey(sm => sm.ToLocationId)
-            .OnDelete(DeleteBehavior.Restrict);
+                    .HasOne(sm => sm.ToLocation)
+                    .WithMany()
+                    .HasForeignKey(sm => sm.ToLocationId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<StockMovement>()
-            .HasOne(sm => sm.ReleasedByUser)
-            .WithMany()
-            .HasForeignKey(sm => sm.ReleasedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+                    .HasOne(sm => sm.ReleasedByUser)
+                    .WithMany()
+                    .HasForeignKey(sm => sm.ReleasedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<StockMovement>()
-            .HasOne(sm => sm.ReceivedByUser)
-            .WithMany()
-            .HasForeignKey(sm => sm.ReceivedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+                    .HasOne(sm => sm.ReceivedByUser)
+                    .WithMany()
+                    .HasForeignKey(sm => sm.ReceivedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ApprovalRule>()
+                    .HasOne(ar => ar.RequiredRole)
+                    .WithMany()
+                    .HasForeignKey(ar => ar.RequiredRoleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ApprovalRule>()
+                    .Property(ar => ar.IsActive)
+                    .HasDefaultValue(true);
     }
 }
