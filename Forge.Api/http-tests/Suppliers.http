@@ -1,17 +1,32 @@
 ### Get all suppliers
 GET {{Forge.Api_HostAddress}}/api/suppliers
 
-### Create a supplier with all fields fulfilled
+### Get supplier by ID
+GET {{Forge.Api_HostAddress}}/api/suppliers/1
+
+### Create supplier
 POST {{Forge.Api_HostAddress}}/api/suppliers
 Content-Type: application/json
 
 {
-  "name": "Supplier1",
+  "name": "Supplier A",
   "currency": "PHP",
-  "contactperson": "Sample Description",
-  "contactemail": "sampleemail@gmail.com",
-  "unitOfMeasure": "09691234567"
+  "contactPerson": "Juan Dela Cruz",
+  "contactEmail": "juan@suppliera.com",
+  "contactPhone": "09171234567"
 }
 
-### Get material by id
-GET {{Forge.Api_HostAddress}}/api/materials/1
+### Update supplier
+PUT {{Forge.Api_HostAddress}}/api/suppliers/1
+Content-Type: application/json
+
+{
+  "name": "Supplier A Updated",
+  "currency": "PHP",
+  "contactPerson": "Juan Dela Cruz",
+  "contactEmail": "juan@suppliera.com",
+  "contactPhone": "09171234567"
+}
+
+### Deactivate supplier
+DELETE {{Forge.Api_HostAddress}}/api/suppliers/1
