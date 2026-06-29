@@ -74,12 +74,7 @@ public class LocationsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<LocationResponse>> Create(CreateLocationRequest request)
     {
-        var location = new Location
-        {
-            Name = request.Name,
-            LocationTypeId = request.LocationTypeId,
-            ParentLocationId = request.ParentLocationId
-        };
+        var location = Location.Create(request.Name, request.ParentLocationId, request.LocationTypeId);
 
         _context.Locations.Add(location);
         await _context.SaveChangesAsync();
@@ -100,9 +95,7 @@ public class LocationsController : ControllerBase
         if (location is null)
             return NotFound();
 
-        location.Name = request.Name;
-        location.LocationTypeId = request.LocationTypeId;
-        location.ParentLocationId = request.ParentLocationId;
+        location.Update(request.Name, request.ParentLocationId, request.LocationTypeId);
 
         await _context.SaveChangesAsync();
         return NoContent();
@@ -115,7 +108,7 @@ public class LocationsController : ControllerBase
         if (location is null)
             return NotFound();
 
-        _context.Locations.Remove(location);
+        location.Deactivate();
         await _context.SaveChangesAsync();
         return NoContent();
     }

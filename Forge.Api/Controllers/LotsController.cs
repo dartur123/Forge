@@ -48,19 +48,16 @@ public class LotsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<LotResponse>> Create(CreateLotRequest createLotRequest)
     {
-        var lot = new Lot
-        {
-            LotNumber = createLotRequest.LotNumber,
-            MaterialId = createLotRequest.MaterialId,
-            SupplierId = createLotRequest.SupplierId,
-            CurrentLocationId = createLotRequest.CurrentLocationId,
-            Quantity = createLotRequest.Quantity,
-            UnitCostPhp = createLotRequest.UnitCostPhp,
-            TotalCostPhp = createLotRequest.Quantity * createLotRequest.UnitCostPhp,
-            ReceivedDate = DateTime.UtcNow,
-            ExpiryDate = createLotRequest.ExpiryDate,
-            Status = LotStatus.Active
-        };
+        var lot = Lot.Create(
+            createLotRequest.LotNumber,
+            createLotRequest.MaterialId,
+            createLotRequest.SupplierId,
+            createLotRequest.CurrentLocationId,
+            createLotRequest.Quantity,
+            createLotRequest.UnitCostPhp,
+            DateTime.UtcNow,
+            createLotRequest.ExpiryDate
+        );
         _context.Lots.Add(lot);
         await _context.SaveChangesAsync();
 
@@ -81,14 +78,16 @@ public class LotsController : ControllerBase
         {
             return NotFound();
         }
-        lot.LotNumber = createLotRequest.LotNumber;
-        lot.MaterialId = createLotRequest.MaterialId;
-        lot.SupplierId = createLotRequest.SupplierId;
-        lot.CurrentLocationId = createLotRequest.CurrentLocationId;
-        lot.Quantity = createLotRequest.Quantity;
-        lot.UnitCostPhp = createLotRequest.UnitCostPhp;
-        lot.TotalCostPhp = createLotRequest.UnitCostPhp * createLotRequest.Quantity;
-        lot.ExpiryDate = createLotRequest.ExpiryDate;
+        lot.Update(
+            createLotRequest.LotNumber,
+            createLotRequest.MaterialId,
+            createLotRequest.SupplierId,
+            createLotRequest.CurrentLocationId,
+            createLotRequest.Quantity,
+            createLotRequest.UnitCostPhp,
+            DateTime.UtcNow,
+            createLotRequest.ExpiryDate
+        );
         await _context.SaveChangesAsync();
 
         var updatedLot = await _context.Lots
@@ -108,7 +107,7 @@ public class LotsController : ControllerBase
         {
             return NotFound();
         }
-        lot.IsActive = false;
+        lot.Deactivate();
         await _context.SaveChangesAsync();
         return NoContent();
     }
