@@ -135,4 +135,23 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         // Assert
         Assert.Equal(70, result.RemainingLotQuantity);
     }
+
+    [Fact]
+    public async Task PostMovement_ShouldFail_WhenQuantityIsZeroOrBelow()
+    {
+        // Arrange
+        var service = new StockLedgerService(_fixture.DbContext);
+
+        var request = new PostStockMovementRequest
+        {
+            LotId = 1,
+            Quantity = 0,
+            Type = StockMovementType.IssuanceToProduction,
+            TransactionDate = DateTime.UtcNow
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.PostMovementAsync(request));
+    }
 }
