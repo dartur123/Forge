@@ -37,10 +37,7 @@ namespace Forge.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<LocationTypeResponse>> Create(CreateLocationTypeRequest request)
         {
-            var locationType = new LocationType
-            {
-                Name = request.Name
-            };
+            var locationType = LocationType.Create(request.Name);
             _context.LocationTypes.Add(locationType);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = locationType.Id }, ToResponse(locationType));
@@ -52,7 +49,7 @@ namespace Forge.Api.Controllers
             var locationType = await _context.LocationTypes.FindAsync(id);
             if (locationType is null)
                 return NotFound();
-            locationType.Name = request.Name;
+            locationType.Update(request.Name);
             await _context.SaveChangesAsync();
             return Ok(ToResponse(locationType));
         }
@@ -64,7 +61,7 @@ namespace Forge.Api.Controllers
             if (locationType is null)
                 return NotFound();
 
-            locationType.IsActive = false;
+            locationType.Deactivate();
             await _context.SaveChangesAsync();
 
             return NoContent();

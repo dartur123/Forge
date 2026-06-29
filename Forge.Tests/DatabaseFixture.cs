@@ -26,7 +26,7 @@ namespace Forge.Tests
                 .Options;
 
             DbContext = new ForgeDbContext(options);
-            await DbContext.Database.MigrateAsync();
+            await DbContext.Database.EnsureCreatedAsync();
         }
 
         public async Task DisposeAsync()

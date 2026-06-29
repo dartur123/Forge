@@ -51,28 +51,24 @@ public class StockLedgerService : IStockLedgerService
 
         try
         {
-            var movement = new StockMovement
-            {
-                Type = request.Type,
-                LotId = request.LotId,
-                FromLocationId = request.FromLocationId,
-                ToLocationId = request.ToLocationId,
-                JobReference = request.JobReference,
-                Quantity = request.Quantity,
-                UnitCostPhp = lot.UnitCostPhp,
-                TotalCostPhp = request.Quantity * lot.UnitCostPhp,
-                ReleasedByUserId = request.ReleasedByUserId,
-                Timestamp = request.TransactionDate
-            };
+            var movement = StockMovement.Create(
+                request.Type,
+                request.LotId,
+                request.FromLocationId,
+                request.ToLocationId,
+                request.JobReference,
+                request.Quantity,
+                lot.UnitCostPhp,
+                request.ReleasedByUserId);
 
             _context.StockMovements.Add(movement);
 
             // Update lot quantity
             if (isIssuance)
-                lot.Quantity -= request.Quantity;
+                lot.Deduct(request.Quantity);
             else if (request.Type == StockMovementType.ReceiptFromSupplier
                   || request.Type == StockMovementType.ReceiptFromProduction)
-                lot.Quantity += request.Quantity;
+                lot.Add(request.Quantity);
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();

@@ -41,15 +41,7 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         var material = Material.Create("SKU-001", "Test Material", MaterialType.Raw, null, "pcs");
         _fixture.DbContext.Materials.Add(material);
         await _fixture.DbContext.SaveChangesAsync();
-
-        var lot = new Lot
-        {
-            LotNumber = "LOT-001",
-            MaterialId = material.Id,
-            Quantity = 50,
-            UnitCostPhp = 100,
-            IsActive = true
-        };
+        var lot = Lot.Create("LOT-001", material.Id, null, null, 50, 100, DateTime.UtcNow, null);
         _fixture.DbContext.Lots.Add(lot);
         await _fixture.DbContext.SaveChangesAsync();
 
@@ -91,15 +83,7 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         var material = Material.Create("SKU-002", "Test Material 2", MaterialType.Raw, null, "pcs");
         _fixture.DbContext.Materials.Add(material);
         await _fixture.DbContext.SaveChangesAsync();
-
-        var lot = new Lot
-        {
-            LotNumber = "LOT-002",
-            MaterialId = material.Id,
-            Quantity = 100,
-            UnitCostPhp = 50,
-            IsActive = true
-        };
+        var lot = Lot.Create("LOT-002", material.Id, null, null, 100, 50, DateTime.UtcNow, null);
         _fixture.DbContext.Lots.Add(lot);
         await _fixture.DbContext.SaveChangesAsync();
 
