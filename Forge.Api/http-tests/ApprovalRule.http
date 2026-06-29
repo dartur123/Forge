@@ -2,7 +2,7 @@
 GET {{Forge.Api_HostAddress}}/api/approvalrules/PurchaseOrder
 
 ### Get single rule by ID
-GET {{Forge.Api_HostAddress}}/api/approvalrules/rule/1
+GET {{Forge.Api_HostAddress}}/api/approvalrules/rule/2
 
 ### Create approval rule
 POST {{Forge.Api_HostAddress}}/api/approvalrules
@@ -15,4 +15,4 @@ Content-Type: application/json
 }
 
 ### Deactivate approval rule
-DELETE {{Forge.Api_HostAddress}}/api/approvalrules/rule/1
+DELETE {{Forge.Api_HostAddress}}/api/approvalrules/rule/2

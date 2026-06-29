@@ -36,13 +36,7 @@ public class ApprovalService : IApprovalService
 
     public async Task<ApprovalRuleResult> CreateRuleAsync(PostApprovalRuleRequest request)
     {
-        var rule = new ApprovalRule
-        {
-            EntityType = request.EntityType,
-            RequiredRoleId = request.RequiredRoleId,
-            SequenceOrder = request.SequenceOrder,
-            IsActive = true
-        };
+        var rule = ApprovalRule.Create(request.EntityType, request.RequiredRoleId, request.SequenceOrder);
         _context.ApprovalRules.Add(rule);
         await _context.SaveChangesAsync();
         var createdRule = await _context.ApprovalRules
@@ -59,7 +53,7 @@ public class ApprovalService : IApprovalService
             throw new NotFoundException($"Approval rule with ID {ruleId} not found.");
         }
 
-        rule.IsActive = false;
+        rule.Deactivate();
         await _context.SaveChangesAsync();
     }
 
