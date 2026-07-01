@@ -22,6 +22,7 @@ builder.Services.AddScoped<IStockLedgerService, StockLedgerService>();
 builder.Services.AddScoped<IApprovalService, ApprovalService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
+builder.Services.AddScoped<ILotService, LotService>();
 
 var app = builder.Build();
 

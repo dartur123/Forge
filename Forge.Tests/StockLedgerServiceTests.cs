@@ -2,7 +2,6 @@
 using Forge.Application.Services;
 using Forge.Domain;
 using Forge.Domain.Enums;
-using Xunit;
 
 namespace Forge.Tests;
 

@@ -19,64 +19,69 @@ public class StockLedgerService : IStockLedgerService
 
     public async Task<StockMovementResult> PostMovementAsync(PostStockMovementRequest request)
     {
-        if (request.Quantity <= 0)
-            throw new InvalidOperationException("Quantity must be greater than zero.");
-
         using var transaction = await _context.Database.BeginTransactionAsync();
 
         try
         {
-            await _context.Database.ExecuteSqlRawAsync("SELECT 1 FROM \"Lots\" WHERE \"Id\" = {0} FOR UPDATE", request.LotId);
-
-            var lot = await _context.Lots
-                .Include(l => l.Material)
-                .FirstOrDefaultAsync(l => l.Id == request.LotId);
-
-            if (lot is null)
-                throw new InvalidOperationException($"Lot {request.LotId} does not exist.");
-
-            if (!lot.IsActive)
-                throw new InvalidOperationException($"Lot {lot.LotNumber} is archived and cannot be used.");
-
-            decimal lotQuantity = await GetLotCurrentQuantity(request.LotId);
-            if (request.Type.IsDecrease() && request.Quantity > lotQuantity)
-            {
-                throw new InvalidOperationException($"Insufficient stock. Requested: {request.Quantity}, Available: {lotQuantity} {lot.Material.UnitOfMeasure}.");
-            }
-
-            var movement = StockMovement.Create(
-                request.Type,
-                request.LotId,
-                request.FromLocationId,
-                request.ToLocationId,
-                request.JobReference,
-                request.Quantity,
-                lot.UnitCostPhp,
-                request.ReleasedByUserId,
-                request.ReceivedByUserId);
-
-            _context.StockMovements.Add(movement);
-
-            await _context.SaveChangesAsync();
+            var result = await PostMovementWithinTransactionAsync(request);
             await transaction.CommitAsync();
-
-            return new StockMovementResult
-            {
-                Id = movement.Id,
-                LotId = lot.Id,
-                LotNumber = lot.LotNumber,
-                Quantity = request.Quantity,
-                UnitCostPhp = lot.UnitCostPhp,
-                Type = request.Type,
-                TransactionDate = request.TransactionDate,
-                JobReference = request.JobReference
-            };
+            return result;
         }
         catch
         {
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    public async Task<StockMovementResult> PostMovementWithinTransactionAsync(PostStockMovementRequest request)
+    {
+        if (request.Quantity <= 0)
+            throw new InvalidOperationException("Quantity must be greater than zero.");
+
+        await _context.Database.ExecuteSqlRawAsync("SELECT 1 FROM \"Lots\" WHERE \"Id\" = {0} FOR UPDATE", request.LotId);
+
+        var lot = await _context.Lots
+            .Include(l => l.Material)
+            .FirstOrDefaultAsync(l => l.Id == request.LotId);
+
+        if (lot is null)
+            throw new InvalidOperationException($"Lot {request.LotId} does not exist.");
+
+        if (!lot.IsActive)
+            throw new InvalidOperationException($"Lot {lot.LotNumber} is archived and cannot be used.");
+
+        decimal lotQuantity = await GetLotCurrentQuantity(request.LotId);
+        if (request.Type.IsDecrease() && request.Quantity > lotQuantity)
+        {
+            throw new InvalidOperationException($"Insufficient stock. Requested: {request.Quantity}, Available: {lotQuantity} {lot.Material.UnitOfMeasure}.");
+        }
+
+        var movement = StockMovement.Create(
+            request.Type,
+            request.LotId,
+            request.FromLocationId,
+            request.ToLocationId,
+            request.JobReference,
+            request.Quantity,
+            lot.UnitCostPhp,
+            request.ReleasedByUserId,
+            request.ReceivedByUserId);
+
+        _context.StockMovements.Add(movement);
+        await _context.SaveChangesAsync();
+
+        return new StockMovementResult
+        {
+            Id = movement.Id,
+            LotId = lot.Id,
+            LotNumber = lot.LotNumber,
+            Quantity = request.Quantity,
+            UnitCostPhp = lot.UnitCostPhp,
+            Type = request.Type,
+            TransactionDate = request.TransactionDate,
+            JobReference = request.JobReference
+        };
     }
 
     public async Task<List<StockMovementHistoryItem>> GetLotHistoryAsync(int lotId)
@@ -103,8 +108,8 @@ public class StockLedgerService : IStockLedgerService
             UnitCostPhp = sm.UnitCostPhp,
             TotalCostPhp = sm.TotalCostPhp,
             JobReference = sm.JobReference,
-            FromLocation = sm.FromLocation is null ? null : LocationSummary.FromEntity(sm.FromLocation),
-            ToLocation = sm.ToLocation is null ? null : LocationSummary.FromEntity(sm.ToLocation),
+            FromLocation = sm.FromLocation is null ? null : LocationResult.FromEntity(sm.FromLocation),
+            ToLocation = sm.ToLocation is null ? null : LocationResult.FromEntity(sm.ToLocation),
             ReleasedByUserId = sm.ReleasedByUserId,
             ReceivedByUserId = sm.ReceivedByUserId,
             Timestamp = sm.Timestamp
@@ -121,6 +126,23 @@ public class StockLedgerService : IStockLedgerService
         var decrease = movements.Where(sm => sm.Type.IsDecrease()).Sum(sm => sm.Quantity);
 
         return increase - decrease;
+    }
+
+    public async Task<Dictionary<int, decimal>> GetLotQuantitiesAsync(List<int> lotIds)
+    {
+        var movements = await _context.StockMovements
+            .Where(sm => lotIds.Contains(sm.LotId))
+            .ToListAsync();
+
+        return lotIds.ToDictionary(
+            lotId => lotId,
+            lotId =>
+            {
+                var lotMovements = movements.Where(sm => sm.LotId == lotId).ToList();
+                var increase = lotMovements.Where(sm => sm.Type.IsIncrease()).Sum(sm => sm.Quantity);
+                var decrease = lotMovements.Where(sm => sm.Type.IsDecrease()).Sum(sm => sm.Quantity);
+                return increase - decrease;
+            });
     }
 }
 
