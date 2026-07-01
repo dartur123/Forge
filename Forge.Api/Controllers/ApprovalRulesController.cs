@@ -2,6 +2,7 @@
 using Forge.Application.Interfaces;
 using Forge.Application.Requests;
 using Forge.Application.Responses;
+using Forge.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Forge.Api.Controllers;
@@ -53,10 +54,99 @@ public class ApprovalRulesController : ControllerBase
             await _approvalService.DeactivateRuleAsync(id);
         }
         catch (NotFoundException ex)
-        { 
+        {
             return NotFound(ex.Message);
         }
-        
+
         return NoContent();
+    }
+
+    [HttpPost("instances")]
+    public async Task<ActionResult<ApprovalInstanceResult>> StartApproval(StartApprovalRequest request)
+    {
+        try
+        {
+            var instance = await _approvalService.StartApprovalAsync(request.EntityType, request.EntityId);
+            return CreatedAtAction(nameof(GetInstance), new { id = instance.Id }, instance);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpGet("instances/{id}")]
+    public async Task<ActionResult<ApprovalInstanceResult>> GetInstance(int id)
+    {
+        try
+        {
+            var instance = await _approvalService.GetInstanceAsync(id);
+            return Ok(instance);
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
+    [HttpPost("instances/{id}/approve")]
+    public async Task<ActionResult<ApprovalInstanceResult>> ApproveStep(int id, ApprovalDecisionRequest request)
+    {
+        try
+        {
+            var instance = await _approvalService.ApproveStepAsync(id, request.UserId, request.Comment);
+            return Ok(instance);
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("instances/{id}/reject")]
+    public async Task<ActionResult<ApprovalInstanceResult>> RejectStep(int id, ApprovalDecisionRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Comment))
+            return BadRequest("A comment is required when rejecting.");
+
+        try
+        {
+            var instance = await _approvalService.RejectStepAsync(id, request.UserId, request.Comment);
+            return Ok(instance);
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("instances/{id}/resubmit")]
+    public async Task<ActionResult<ApprovalInstanceResult>> Resubmit(int id)
+    {
+        try
+        {
+            var instance = await _approvalService.ResubmitAsync(id);
+            return Ok(instance);
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }

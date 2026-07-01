@@ -26,6 +26,8 @@ public class ForgeDbContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<CompanySettings> CompanySettings { get; set; }
+    public DbSet<ApprovalInstance> ApprovalInstances { get; set; }
+    public DbSet<ApprovalDecision> ApprovalDecisions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -114,5 +116,17 @@ public class ForgeDbContext : DbContext
         modelBuilder.Entity<ApprovalRule>()
                     .Property(ar => ar.IsActive)
                     .HasDefaultValue(true);
+
+        modelBuilder.Entity<ApprovalDecision>()
+            .HasOne(ad => ad.ApprovalInstance)
+            .WithMany(ai => ai.Decisions)
+            .HasForeignKey(ad => ad.ApprovalInstanceId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ApprovalDecision>()
+                    .HasOne(ad => ad.DecidedByUser)
+                    .WithMany()
+                    .HasForeignKey(ad => ad.DecidedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
     }
 }
