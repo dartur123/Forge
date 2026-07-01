@@ -24,4 +24,8 @@
     <ProjectReference Include="..\Forge.Infrastructure\Forge.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTOs\ApprovalRules\" />
+  </ItemGroup>
+
 </Project>
