@@ -10,7 +10,7 @@
         public string? JobReference { get; set; }
         public LocationSummary? FromLocation { get; set; }
         public LocationSummary? ToLocation { get; set; }
-        public int ReleasedByUserId { get; set; }
+        public int? ReleasedByUserId { get; set; }
         public int? ReceivedByUserId { get; set; }
         public DateTime Timestamp { get; set; }
     }

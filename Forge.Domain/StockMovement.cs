@@ -18,13 +18,13 @@ public class StockMovement
     public decimal Quantity { get; private set; }
     public decimal UnitCostPhp { get; private set; }
     public decimal TotalCostPhp { get; private set; }
-    public int ReleasedByUserId { get; private set; }
-    public User ReleasedByUser { get; private set; } = null!;
+    public int? ReleasedByUserId { get; private set; }
+    public User? ReleasedByUser { get; private set; } = null!;
     public int? ReceivedByUserId { get; private set; }
     public User? ReceivedByUser { get; private set; }
     public DateTime Timestamp { get; private set; } = DateTime.UtcNow;
 
-    public static StockMovement Create(StockMovementType type, int lotId, int? fromLocationId, int? toLocationId, string? jobReference, decimal quantity, decimal unitCostPhp, int releasedByUserId)
+    public static StockMovement Create(StockMovementType type, int lotId, int? fromLocationId, int? toLocationId, string? jobReference, decimal quantity, decimal unitCostPhp, int? releasedByUserId, int? receivedByUserId)
     {
         if (quantity <= 0)
             throw new DomainException("Quantity must be greater than zero.");
@@ -40,7 +40,8 @@ public class StockMovement
             Quantity = quantity,
             UnitCostPhp = unitCostPhp,
             TotalCostPhp = quantity * unitCostPhp,
-            ReleasedByUserId = releasedByUserId
+            ReleasedByUserId = releasedByUserId,
+            ReceivedByUserId = receivedByUserId
         };
     }
 }

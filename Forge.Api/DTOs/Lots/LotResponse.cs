@@ -18,10 +18,10 @@ namespace Forge.Api.DTOs.Lots
         public decimal TotalCost { get; set; }
         public DateTime ReceivedDate { get; set; }
         public DateTime? ExpiryDate { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
         public bool IsActive { get; set; }
 
-        public static LotResponse FromEntity(Lot lot) => new()
+        public static LotResponse FromEntity(Lot lot,decimal qty) => new()
         {
             Id = lot.Id,
             LotNumber = lot.LotNumber,
@@ -32,9 +32,9 @@ namespace Forge.Api.DTOs.Lots
             Location = lot.CurrentLocation is null
                 ? null
                 : LocationResponse.FromEntity(lot.CurrentLocation),
-            Quantity = lot.Quantity,
+            Quantity = qty,
             UnitCost = lot.UnitCostPhp,
-            TotalCost = lot.TotalCostPhp,
+            TotalCost = lot.UnitCostPhp * qty,
             ReceivedDate = lot.ReceivedDate,
             ExpiryDate = lot.ExpiryDate,
             Status = lot.Status.ToString(),
