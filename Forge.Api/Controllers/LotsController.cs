@@ -1,9 +1,8 @@
-﻿using Forge.Api.DTOs.Lots;
-using Forge.Domain;
-using Forge.Domain.Enums;
-using Forge.Infrastructure;
+﻿using Forge.Application.Exceptions;
+using Forge.Application.Interfaces;
+using Forge.Application.Requests;
+using Forge.Application.Responses;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Forge.Api.Controllers;
 
@@ -11,105 +10,76 @@ namespace Forge.Api.Controllers;
 [Route("api/[controller]")]
 public class LotsController : ControllerBase
 {
-    private readonly ForgeDbContext _context;
+    private readonly ILotService _lotService;
 
-    public LotsController(ForgeDbContext context)
+    public LotsController(ILotService lotService)
     {
-        _context = context;
+        _lotService = lotService;
     }
 
-    //[HttpGet]
-    //public async Task<ActionResult<List<LotResponse>>> GetAll()
-    //{
-    //    var lots = await _context.Lots
-    //        .Include(l => l.Material)
-    //        .Include(l => l.Supplier)
-    //        .Include(l => l.CurrentLocation)
-    //        .ToListAsync();
+    [HttpGet]
+    public async Task<ActionResult<List<LotResult>>> GetAll()
+    {
+        return await _lotService.GetAllLotsAsync();
+    }
 
-    //    return Ok(lots.Select(LotResponse.FromEntity).ToList());
-    //}
+    [HttpGet("{id}")]
+    public async Task<ActionResult<LotResult>> GetById(int id)
+    {
+        try
+        {
+            return await _lotService.GetLotByIdAsync(id);
+        }
+        catch (NotFoundException nfe)
+        {
+            return NotFound(nfe.Message);
+        }
+    }
 
-    //[HttpGet("{id}")]
-    //public async Task<ActionResult<LotResponse>> GetById(int id)
-    //{
-    //    var lot = await _context.Lots
-    //        .Include(l => l.Material)
-    //        .Include(l => l.Supplier)
-    //        .Include(l => l.CurrentLocation)
-    //        .FirstOrDefaultAsync(l => l.Id == id);
-    //    if (lot == null)
-    //    {
-    //        return NotFound();
-    //    }
-    //    return Ok(LotResponse.FromEntity(lot));
-    //}
+    [HttpPost]
+    public async Task<ActionResult<LotResult>> Create(PostLotRequest request)
+    {
+        var createdLot = await _lotService.CreateLotAsync(request);
 
-    //[HttpPost]
-    //public async Task<ActionResult<LotResponse>> Create(CreateLotRequest createLotRequest)
-    //{
-    //    var lot = Lot.Create(
-    //        createLotRequest.LotNumber,
-    //        createLotRequest.MaterialId,
-    //        createLotRequest.SupplierId,
-    //        createLotRequest.CurrentLocationId,
-    //        createLotRequest.Quantity,
-    //        createLotRequest.UnitCostPhp,
-    //        DateTime.UtcNow,
-    //        createLotRequest.ExpiryDate
-    //    );
-    //    _context.Lots.Add(lot);
-    //    await _context.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetById),
+            new { id = createdLot.Id }, createdLot);
+    }
 
-    //    var createdLot = await _context.Lots
-    //        .Include(l => l.Material)
-    //        .Include(l => l.Supplier)
-    //        .Include(l => l.CurrentLocation)
-    //        .FirstOrDefaultAsync(l => l.Id == lot.Id);
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, PostLotRequest request)
+    {
+        try
+        {
+            var updatedLot = await _lotService.UpdateLotAsync(id, request);
 
-    //    return CreatedAtAction(nameof(GetById), new { id = createdLot?.Id }, LotResponse.FromEntity(createdLot!));
-    //}
+            return NoContent();
+        }
+        catch (NotFoundException nfe)
+        {
+            return NotFound(nfe.Message);
+        }
+        catch (InvalidOperationException ioe)
+        {
+            return BadRequest(ioe.Message);
+        }
+    }
 
-    //[HttpPut("{id}")]
-    //public async Task<ActionResult<LotResponse>> Update(int id, CreateLotRequest createLotRequest)
-    //{
-    //    var lot = await _context.Lots.FindAsync(id);
-    //    if (lot == null)
-    //    {
-    //        return NotFound();
-    //    }
-    //    lot.Update(
-    //        createLotRequest.LotNumber,
-    //        createLotRequest.MaterialId,
-    //        createLotRequest.SupplierId,
-    //        createLotRequest.CurrentLocationId,
-    //        createLotRequest.Quantity,
-    //        createLotRequest.UnitCostPhp,
-    //        DateTime.UtcNow,
-    //        createLotRequest.ExpiryDate
-    //    );
-    //    await _context.SaveChangesAsync();
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            await _lotService.DeactivateLotAsync(id);
 
-    //    var updatedLot = await _context.Lots
-    //        .Include(l => l.Material)
-    //        .Include(l => l.Supplier)
-    //        .Include(l => l.CurrentLocation)
-    //        .FirstOrDefaultAsync(l => l.Id == lot.Id);
-
-    //    return Ok(LotResponse.FromEntity(updatedLot!));
-    //}
-
-    //[HttpDelete("{id}")]
-    //public async Task<IActionResult> Delete(int id)
-    //{
-    //    var lot = await _context.Lots.FindAsync(id);
-    //    if (lot == null)
-    //    {
-    //        return NotFound();
-    //    }
-    //    lot.Deactivate();
-    //    await _context.SaveChangesAsync();
-    //    return NoContent();
-    //}
+            return NoContent();
+        }
+        catch (NotFoundException nfe)
+        {
+            return NotFound(nfe.Message);
+        }
+        catch (InvalidOperationException ioe)
+        {
+            return BadRequest(ioe.Message);
+        }
+    }
 }
-
