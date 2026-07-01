@@ -5,9 +5,6 @@ using Forge.Domain;
 using Forge.Domain.Enums;
 using Forge.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Forge.Application.Services;
 
@@ -22,35 +19,31 @@ public class StockLedgerService : IStockLedgerService
 
     public async Task<StockMovementResult> PostMovementAsync(PostStockMovementRequest request)
     {
-        // Rule 1: Quantity must be positive
         if (request.Quantity <= 0)
             throw new InvalidOperationException("Quantity must be greater than zero.");
 
-        // Rule 2: Lot must exist and be active
-        var lot = await _context.Lots
-            .Include(l => l.Material)
-            .FirstOrDefaultAsync(l => l.Id == request.LotId);
-
-        if (lot is null)
-            throw new InvalidOperationException($"Lot {request.LotId} does not exist.");
-
-        if (!lot.IsActive)
-            throw new InvalidOperationException($"Lot {lot.LotNumber} is archived and cannot be used.");
-
-        // Rule 3: For issuances, can't take more than available
-        var isIssuance = request.Type == StockMovementType.IssuanceToProduction
-            || request.Type == StockMovementType.IssuanceToCustomer
-            || request.Type == StockMovementType.IssuanceToSubcon;
-
-        if (isIssuance && request.Quantity > lot.Quantity)
-            throw new InvalidOperationException(
-                $"Insufficient stock. Requested: {request.Quantity}, Available: {lot.Quantity} {lot.Material.UnitOfMeasure}.");
-
-        // Post the movement and update lot quantity atomically
         using var transaction = await _context.Database.BeginTransactionAsync();
 
         try
         {
+            await _context.Database.ExecuteSqlRawAsync("SELECT 1 FROM \"Lots\" WHERE \"Id\" = {0} FOR UPDATE", request.LotId);
+
+            var lot = await _context.Lots
+                .Include(l => l.Material)
+                .FirstOrDefaultAsync(l => l.Id == request.LotId);
+
+            if (lot is null)
+                throw new InvalidOperationException($"Lot {request.LotId} does not exist.");
+
+            if (!lot.IsActive)
+                throw new InvalidOperationException($"Lot {lot.LotNumber} is archived and cannot be used.");
+
+            decimal lotQuantity = await GetLotCurrentQuantity(request.LotId);
+            if (request.Type.IsDecrease() && request.Quantity > lotQuantity)
+            {
+                throw new InvalidOperationException($"Insufficient stock. Requested: {request.Quantity}, Available: {lotQuantity} {lot.Material.UnitOfMeasure}.");
+            }
+
             var movement = StockMovement.Create(
                 request.Type,
                 request.LotId,
@@ -59,16 +52,10 @@ public class StockLedgerService : IStockLedgerService
                 request.JobReference,
                 request.Quantity,
                 lot.UnitCostPhp,
-                request.ReleasedByUserId);
+                request.ReleasedByUserId,
+                request.ReceivedByUserId);
 
             _context.StockMovements.Add(movement);
-
-            // Update lot quantity
-            if (isIssuance)
-                lot.Deduct(request.Quantity);
-            else if (request.Type == StockMovementType.ReceiptFromSupplier
-                  || request.Type == StockMovementType.ReceiptFromProduction)
-                lot.Add(request.Quantity);
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -79,7 +66,7 @@ public class StockLedgerService : IStockLedgerService
                 LotId = lot.Id,
                 LotNumber = lot.LotNumber,
                 Quantity = request.Quantity,
-                RemainingLotQuantity = lot.Quantity,
+                UnitCostPhp = lot.UnitCostPhp,
                 Type = request.Type,
                 TransactionDate = request.TransactionDate,
                 JobReference = request.JobReference
@@ -105,7 +92,7 @@ public class StockLedgerService : IStockLedgerService
                                         .Include(sm => sm.ReleasedByUser)
                                         .Include(sm => sm.ReceivedByUser)
                                         .Where(sm => sm.LotId == lotId)
-                                        .OrderBy(sm=> sm.Timestamp)
+                                        .OrderBy(sm => sm.Timestamp)
                                         .ToListAsync();
 
         return stockMovementList.Select(sm => new StockMovementHistoryItem
@@ -122,6 +109,18 @@ public class StockLedgerService : IStockLedgerService
             ReceivedByUserId = sm.ReceivedByUserId,
             Timestamp = sm.Timestamp
         }).ToList();
+    }
+
+    public async Task<decimal> GetLotCurrentQuantity(int lotId)
+    {
+        var movements = await _context.StockMovements
+            .Where(sm => sm.LotId == lotId)
+            .ToListAsync();
+
+        var increase = movements.Where(sm => sm.Type.IsIncrease()).Sum(sm => sm.Quantity);
+        var decrease = movements.Where(sm => sm.Type.IsDecrease()).Sum(sm => sm.Quantity);
+
+        return increase - decrease;
     }
 }
 
