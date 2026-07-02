@@ -113,7 +113,7 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
-    public async Task PostMovement_ShouldFail_WhenLotIsArchived()
+    public async Task PostMovement_ShouldFail_WhenLotIsDeactivated()
     {
         var (_, lot, _) = await SeedLotAsync("SKU-ARC", "LOT-ARC", 100, 50);
         lot.Deactivate();
@@ -132,7 +132,7 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.PostMovementAsync(request));
 
-        Assert.Contains("archived", ex.Message);
+        Assert.Contains("does not exist", ex.Message);
     }
 
     // ---------- Insufficient stock guard ----------

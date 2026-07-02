@@ -68,10 +68,8 @@ namespace Forge.Application.Services
         public async Task DeactivateLotAsync(int lotId)
         {
             var lot = await _context.Lots.FirstOrDefaultAsync(l => l.Id == lotId);
-            if(lot==null)
+            if (lot == null)
                 throw new NotFoundException($"Lot {lotId} not found");
-            if(!lot.IsActive)
-                throw new InvalidOperationException($"Lot {lotId} is already deactivated");
             lot.Deactivate();
             await _context.SaveChangesAsync();
         }
@@ -109,8 +107,6 @@ namespace Forge.Application.Services
             var lot = await _context.Lots.FirstOrDefaultAsync(l => l.Id == lotId);
             if (lot == null)
                 throw new NotFoundException($"Lot {lotId} not found");
-            if (!lot.IsActive)
-                throw new InvalidOperationException($"Lot {lotId} is deactivated");
 
             lot.Update(request.LotNumber, 
                 request.MaterialId, 
