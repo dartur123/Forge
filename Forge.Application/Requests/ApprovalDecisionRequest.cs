@@ -1,8 +1,7 @@
-﻿namespace Forge.Application.Requests
+﻿namespace Forge.Application.Requests;
+
+public class ApprovalDecisionRequest
 {
-    public class ApprovalDecisionRequest
-    {
-        public int UserId { get; set; }
-        public string? Comment { get; set; } = string.Empty;
-    }
+    public int UserId { get; set; }
+    public string? Comment { get; set; } = string.Empty;
 }

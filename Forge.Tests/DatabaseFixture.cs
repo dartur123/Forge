@@ -5,34 +5,33 @@ using System.Collections.Generic;
 using System.Text;
 using Testcontainers.PostgreSql;
 
-namespace Forge.Tests
+namespace Forge.Tests;
+
+public class DatabaseFixture : IAsyncLifetime
 {
-    public class DatabaseFixture : IAsyncLifetime
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17")
+                                                        .WithDatabase("forge_test")
+                                                        .WithUsername("postgres")
+                                                        .WithPassword("postgres")
+                                                        .Build();
+
+    public ForgeDbContext DbContext { get; private set; } = null!;
+
+    public async Task InitializeAsync()
     {
-        private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17")
-                                                            .WithDatabase("forge_test")
-                                                            .WithUsername("postgres")
-                                                            .WithPassword("postgres")
-                                                            .Build();
+        await _container.StartAsync();
 
-        public ForgeDbContext DbContext { get; private set; } = null!;
+        var options = new DbContextOptionsBuilder<ForgeDbContext>()
+            .UseNpgsql(_container.GetConnectionString())
+            .Options;
 
-        public async Task InitializeAsync()
-        {
-            await _container.StartAsync();
+        DbContext = new ForgeDbContext(options);
+        await DbContext.Database.EnsureCreatedAsync();
+    }
 
-            var options = new DbContextOptionsBuilder<ForgeDbContext>()
-                .UseNpgsql(_container.GetConnectionString())
-                .Options;
-
-            DbContext = new ForgeDbContext(options);
-            await DbContext.Database.EnsureCreatedAsync();
-        }
-
-        public async Task DisposeAsync()
-        {
-            await DbContext.DisposeAsync();
-            await _container.DisposeAsync();
-        }
+    public async Task DisposeAsync()
+    {
+        await DbContext.DisposeAsync();
+        await _container.DisposeAsync();
     }
 }

@@ -51,7 +51,7 @@ public class StockLedgerService : IStockLedgerService
         if (lot is null)
             throw new InvalidOperationException($"Lot {request.LotId} does not exist.");
 
-        decimal lotQuantity = await GetLotCurrentQuantity(request.LotId);
+        decimal lotQuantity = await GetLotCurrentQuantityAsync(request.LotId);
         if (request.Type.IsDecrease() && request.Quantity > lotQuantity)
         {
             throw new InvalidOperationException($"Insufficient stock. Requested: {request.Quantity}, Available: {lotQuantity} {lot.Material.UnitOfMeasure}.");
@@ -116,7 +116,7 @@ public class StockLedgerService : IStockLedgerService
         }).ToList();
     }
 
-    public async Task<decimal> GetLotCurrentQuantity(int lotId)
+    public async Task<decimal> GetLotCurrentQuantityAsync(int lotId)
     {
         var movements = await _context.StockMovements
             .Where(sm => sm.LotId == lotId)

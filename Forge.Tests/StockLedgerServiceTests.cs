@@ -170,7 +170,7 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         };
 
         await service.PostMovementAsync(request);
-        var quantityAfter = await service.GetLotCurrentQuantity(lot.Id);
+        var quantityAfter = await service.GetLotCurrentQuantityAsync(lot.Id);
 
         Assert.Equal(0, quantityAfter);
     }
@@ -192,7 +192,7 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         };
 
         await service.PostMovementAsync(request);
-        var quantityAfter = await service.GetLotCurrentQuantity(lot.Id);
+        var quantityAfter = await service.GetLotCurrentQuantityAsync(lot.Id);
 
         Assert.Equal(70, quantityAfter);
     }
@@ -212,7 +212,7 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         };
 
         var result = await service.PostMovementAsync(request);
-        var quantityAfter = await service.GetLotCurrentQuantity(lot.Id);
+        var quantityAfter = await service.GetLotCurrentQuantityAsync(lot.Id);
 
         Assert.Equal(140, quantityAfter);
         Assert.Equal(StockMovementType.ReceiptFromSupplier, result.Type);
@@ -233,7 +233,7 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         };
 
         await service.PostMovementAsync(request);
-        var quantityAfter = await service.GetLotCurrentQuantity(lot.Id);
+        var quantityAfter = await service.GetLotCurrentQuantityAsync(lot.Id);
 
         Assert.Equal(110, quantityAfter);
     }
@@ -253,7 +253,7 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         };
 
         await service.PostMovementAsync(request);
-        var quantityAfter = await service.GetLotCurrentQuantity(lot.Id);
+        var quantityAfter = await service.GetLotCurrentQuantityAsync(lot.Id);
 
         Assert.Equal(90, quantityAfter);
     }
@@ -273,7 +273,7 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         };
 
         await service.PostMovementAsync(request);
-        var quantityAfter = await service.GetLotCurrentQuantity(lot.Id);
+        var quantityAfter = await service.GetLotCurrentQuantityAsync(lot.Id);
 
         Assert.Equal(100, quantityAfter);
     }
@@ -308,21 +308,21 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
             TransactionDate = DateTime.UtcNow
         });
 
-        var quantityAfter = await service.GetLotCurrentQuantity(lot.Id);
+        var quantityAfter = await service.GetLotCurrentQuantityAsync(lot.Id);
 
         // 100 (seed) + 50 (receipt) - 30 (issuance); transfer is neutral
         Assert.Equal(120, quantityAfter);
     }
 
-    // ---------- GetLotCurrentQuantity ----------
+    // ---------- GetLotCurrentQuantityAsync ----------
 
     [Fact]
-    public async Task GetLotCurrentQuantity_ShouldReturnZero_WhenNoMovementsExist()
+    public async Task GetLotCurrentQuantityAsync_ShouldReturnZero_WhenNoMovementsExist()
     {
         var (_, lot, _) = await SeedLotAsync("SKU-NEW", "LOT-NEW", 0, 100);
         var service = new StockLedgerService(_fixture.DbContext);
 
-        var quantity = await service.GetLotCurrentQuantity(lot.Id);
+        var quantity = await service.GetLotCurrentQuantityAsync(lot.Id);
 
         Assert.Equal(0, quantity);
     }
