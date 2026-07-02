@@ -401,4 +401,22 @@ public class StockLedgerServiceTests : IClassFixture<DatabaseFixture>
         Assert.Equal("JOB-001", history[0].JobReference);
         Assert.Equal(StockMovementType.ReceiptFromSupplier.ToString(), history[0].Type);
     }
+
+    [Fact]
+    public async Task PostMovementWithinTransaction_ShouldThrow_WhenNoTransactionIsActive()
+    {
+        var (_, lot, _) = await SeedLotAsync("SKU-NOTRANS", "LOT-NOTRANS", 50, 100);
+        var service = new StockLedgerService(_fixture.DbContext);
+
+        var request = new PostStockMovementRequest
+        {
+            LotId = lot.Id,
+            Quantity = 10,
+            Type = StockMovementType.IssuanceToProduction,
+            TransactionDate = DateTime.UtcNow
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.PostMovementWithinTransactionAsync(request));
+    }
 }
