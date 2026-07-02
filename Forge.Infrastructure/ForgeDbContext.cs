@@ -43,6 +43,16 @@ public class ForgeDbContext : DbContext
                     .HasForeignKey(l => l.LocationTypeId)
                     .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<Location>()
+                    .HasQueryFilter(l => l.IsActive);
+
+        modelBuilder.Entity<Location>()
+                    .Property(l => l.IsActive)
+                    .HasDefaultValue(true);
+
+        modelBuilder.Entity<LocationType>()
+                    .HasQueryFilter(lt => lt.IsActive);
+
         modelBuilder.Entity<LocationType>()
                     .Property(lt => lt.IsActive)
                     .HasDefaultValue(true);
@@ -65,13 +75,22 @@ public class ForgeDbContext : DbContext
                     .HasForeignKey(l => l.CurrentLocationId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<Material>()
-                    .Property(m => m.IsActive)
-                    .HasDefaultValue(true);
+        modelBuilder.Entity<Lot>()
+                    .HasQueryFilter(l => l.IsActive);
 
         modelBuilder.Entity<Lot>()
                     .Property(l => l.IsActive)
                     .HasDefaultValue(true);
+
+        modelBuilder.Entity<Material>()
+                    .HasQueryFilter(m => m.IsActive);
+
+        modelBuilder.Entity<Material>()
+                    .Property(m => m.IsActive)
+                    .HasDefaultValue(true);
+
+        modelBuilder.Entity<Supplier>()
+                    .HasQueryFilter(s => s.IsActive);
 
         modelBuilder.Entity<Supplier>()
                     .Property(s => s.IsActive)
@@ -114,14 +133,17 @@ public class ForgeDbContext : DbContext
                     .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ApprovalRule>()
+                    .HasQueryFilter(ar => ar.IsActive);
+
+        modelBuilder.Entity<ApprovalRule>()
                     .Property(ar => ar.IsActive)
                     .HasDefaultValue(true);
 
         modelBuilder.Entity<ApprovalDecision>()
-            .HasOne(ad => ad.ApprovalInstance)
-            .WithMany(ai => ai.Decisions)
-            .HasForeignKey(ad => ad.ApprovalInstanceId)
-            .OnDelete(DeleteBehavior.Restrict);
+                    .HasOne(ad => ad.ApprovalInstance)
+                    .WithMany(ai => ai.Decisions)
+                    .HasForeignKey(ad => ad.ApprovalInstanceId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ApprovalDecision>()
                     .HasOne(ad => ad.DecidedByUser)

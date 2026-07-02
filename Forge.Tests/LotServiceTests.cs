@@ -254,7 +254,7 @@ public class LotServiceTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
-    public async Task UpdateLot_ShouldThrow_WhenLotIsDeactivated()
+    public async Task UpdateLot_ShouldThrowNotFound_WhenLotIsDeactivated()
     {
         var material = await SeedMaterialAsync("SKU-UPD-2");
         var service = CreateService();
@@ -278,7 +278,7 @@ public class LotServiceTests : IClassFixture<DatabaseFixture>
             ReceivedDate = DateTime.UtcNow
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<NotFoundException>(() =>
             service.UpdateLotAsync(created.Id, updateRequest));
     }
 
@@ -324,7 +324,7 @@ public class LotServiceTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
-    public async Task DeactivateLot_ShouldSetIsActiveFalse_WhenLotIsActive()
+    public async Task DeactivateLot_ShouldMakeLotNotFound_WhenFetchedAfterward()
     {
         var material = await SeedMaterialAsync("SKU-DEACT-1");
         var service = CreateService();
@@ -340,12 +340,12 @@ public class LotServiceTests : IClassFixture<DatabaseFixture>
 
         await service.DeactivateLotAsync(created.Id);
 
-        var result = await service.GetLotByIdAsync(created.Id);
-        Assert.False(result.IsActive);
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.GetLotByIdAsync(created.Id));
     }
 
     [Fact]
-    public async Task DeactivateLot_ShouldThrow_WhenAlreadyDeactivated()
+    public async Task DeactivateLot_ShouldThrowNotFound_WhenAlreadyDeactivated()
     {
         var material = await SeedMaterialAsync("SKU-DEACT-2");
         var service = CreateService();
@@ -361,7 +361,7 @@ public class LotServiceTests : IClassFixture<DatabaseFixture>
 
         await service.DeactivateLotAsync(created.Id);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<NotFoundException>(() =>
             service.DeactivateLotAsync(created.Id));
     }
 }

@@ -48,9 +48,6 @@ public class StockLedgerService : IStockLedgerService
         if (lot is null)
             throw new InvalidOperationException($"Lot {request.LotId} does not exist.");
 
-        if (!lot.IsActive)
-            throw new InvalidOperationException($"Lot {lot.LotNumber} is archived and cannot be used.");
-
         decimal lotQuantity = await GetLotCurrentQuantity(request.LotId);
         if (request.Type.IsDecrease() && request.Quantity > lotQuantity)
         {
