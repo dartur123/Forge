@@ -19,7 +19,7 @@ public class StockMovement
     public decimal UnitCostPhp { get; private set; }
     public decimal TotalCostPhp { get; private set; }
     public int? ReleasedByUserId { get; private set; }
-    public User? ReleasedByUser { get; private set; } = null!;
+    public User? ReleasedByUser { get; private set; }
     public int? ReceivedByUserId { get; private set; }
     public User? ReceivedByUser { get; private set; }
     public DateTime Timestamp { get; private set; } = DateTime.UtcNow;

@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Forge.Domain.Enums
+namespace Forge.Domain.Enums;
+
+public enum DecisionType
 {
-    public enum DecisionType
-    {
-        Approved,
-        Rejected
-    }
+    Approved,
+    Rejected
 }

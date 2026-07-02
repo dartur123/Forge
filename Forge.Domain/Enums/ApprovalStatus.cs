@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Forge.Domain.Enums
+namespace Forge.Domain.Enums;
+
+public enum ApprovalStatus
 {
-    public enum ApprovalStatus
-    {
-        Pending,
-        Approved,
-        Rejected
-    }
+    Pending,
+    Approved,
+    Rejected
 }
