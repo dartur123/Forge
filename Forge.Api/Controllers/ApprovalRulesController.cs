@@ -105,6 +105,10 @@ public class ApprovalRulesController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+        catch(ForbiddenException fe)
+        {
+            return StatusCode(403, fe.Message);
+        }
     }
 
     [HttpPost("instances/{id}/reject")]
