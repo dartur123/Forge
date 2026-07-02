@@ -36,6 +36,9 @@ public class StockLedgerService : IStockLedgerService
 
     public async Task<StockMovementResult> PostMovementWithinTransactionAsync(PostStockMovementRequest request)
     {
+        if (_context.Database.CurrentTransaction is null)
+            throw new InvalidOperationException("PostMovementWithinTransactionAsync must be called within an existing transaction.");
+
         if (request.Quantity <= 0)
             throw new InvalidOperationException("Quantity must be greater than zero.");
 
