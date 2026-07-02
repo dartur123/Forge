@@ -94,18 +94,28 @@ public class ApprovalService : IApprovalService
         if(approvalInstance == null)
             throw new NotFoundException($"Approval instance with ID {instanceId} not found.");
 
-        if (approvalInstance.Status != ApprovalStatus.Pending)
-            throw new InvalidOperationException($"Cannot approve — instance is already {approvalInstance.Status}.");
-
         using var transaction = await _context.Database.BeginTransactionAsync();
 
         try
         {
+            if (approvalInstance.Status != ApprovalStatus.Pending)
+                throw new InvalidOperationException($"Cannot approve — instance is already {approvalInstance.Status}.");
+
+            var requiredApprovals = await GetRequiredApprovalsAsync(approvalInstance.EntityType);
+            var requiredApproval = requiredApprovals.FirstOrDefault(ra => ra.SequenceOrder == approvalInstance.CurrentSequenceOrder);
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (requiredApproval == null)
+                throw new ForbiddenException($"No approval rule configured for sequence order {approvalInstance.CurrentSequenceOrder}.");
+
+            if (user == null || user.RoleId != requiredApproval.RoleId)
+                throw new ForbiddenException($"User does not hold the required role ({requiredApproval.RoleName}) for this approval step.");
+
             var approvalDecision = ApprovalDecision.Create(approvalInstance.Id, approvalInstance.CurrentSequenceOrder, userId, DecisionType.Approved, comment);
             _context.ApprovalDecisions.Add(approvalDecision);
             await _context.SaveChangesAsync();
 
-            var requiredApprovals = await GetRequiredApprovalsAsync(approvalInstance.EntityType);
             if (requiredApprovals.Count==approvalInstance.CurrentSequenceOrder)
             {
                 approvalInstance.Approve();

@@ -398,4 +398,25 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
         Assert.Equal("Approved", fetched.Status);
         Assert.Single(fetched.Decisions);
     }
+
+    [Fact]
+    public async Task ApproveStep_ShouldThrowForbidden_WhenUserLacksRequiredRole()
+    {
+        var role1 = await SeedRoleAsync("RequiredRole");
+        var role2 = await SeedRoleAsync("WrongRole");
+
+        var user = await SeedUserAsync("userwithwrongrole@gmail.com", role2.Id);
+
+        await SeedRuleAsync("TestEntity-Forbidden", role1.Id, 1);
+
+        var service = CreateService();
+        var instance = await service.StartApprovalAsync("TestEntity-Forbidden", 1);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+    service.ApproveStepAsync(instance.Id, user.Id, null));
+
+        var decisions = _fixture.DbContext.ApprovalDecisions.Where(d => d.ApprovalInstanceId == instance.Id);
+        Assert.Empty(decisions);
+
+    }
 }
