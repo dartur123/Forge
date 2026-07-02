@@ -16,6 +16,7 @@ agent that respects how *your* company actually works.
 ## Tech Stack
 - ASP.NET Core Web API (.NET 10)
 - EF Core + PostgreSQL (Docker)
+- Docker (API containerized, full stack via `docker compose up`)
 - Clean Architecture (Domain / Application / Infrastructure / API)
 - xUnit + Testcontainers (integration tests)
 - Azure (coming Phase 2)
@@ -34,7 +35,7 @@ agent that respects how *your* company actually works.
 - Approval Rules (configurable per company)
 - Company Settings (costing method, base currency)
 - Users + Roles
-
+  
 ## Status
 ✅ Phase 1 — Backend in progress
 - 16-entity domain model complete
@@ -42,3 +43,5 @@ agent that respects how *your* company actually works.
 - StockLedgerService with atomic transactions
 - Integration tests with real PostgreSQL via Testcontainers
 - Factory pattern refactor underway (ApprovalRule, Material, Supplier done)
+- API containerized (multi-stage Dockerfile); full stack runs via `docker compose up`
+- Role-based authorization enforced on approval steps
