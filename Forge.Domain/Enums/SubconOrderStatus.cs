@@ -3,10 +3,9 @@
 public enum SubconOrderStatus
 {
     Draft,
-    PendingApproval,
+    Submitted,
     Approved,
-    Sent,
-    Received,
-    Closed,
-    Rejected
+    Rejected,
+    Returned,
+    Cancelled
 }
