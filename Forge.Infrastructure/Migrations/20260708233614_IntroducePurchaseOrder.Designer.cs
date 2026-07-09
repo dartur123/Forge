@@ -3,6 +3,7 @@ using System;
 using Forge.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Forge.Infrastructure.Migrations
 {
     [DbContext(typeof(ForgeDbContext))]
-    partial class ForgeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260708233614_IntroducePurchaseOrder")]
+    partial class IntroducePurchaseOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -504,29 +507,25 @@ namespace Forge.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<decimal>("ExchangeRate")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)");
-
-                    b.Property<bool>("IsSentToSupplier")
-                        .HasColumnType("boolean");
+                        .HasColumnType("numeric");
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<int>("SubcontractorId")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("TotalAmountForeign")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TotalAmountPhp")
+                        .HasColumnType("numeric");
+
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("SubcontractorId");
 
                     b.ToTable("SubconOrders");
                 });
@@ -543,28 +542,24 @@ namespace Forge.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<decimal>("ExpectedOutputQuantity")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("numeric(18,4)");
+                        .HasColumnType("numeric");
 
-                    b.Property<int>("MaterialId")
+                    b.Property<int>("MaterialSentId")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("ProcessingCostForeign")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("numeric(18,4)");
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("ProcessingCostPhp")
+                        .HasColumnType("numeric");
 
                     b.Property<decimal>("QuantitySent")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("numeric(18,4)");
+                        .HasColumnType("numeric");
 
                     b.Property<int>("SubconOrderId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ExpectedOutputMaterialId");
-
-                    b.HasIndex("MaterialId");
 
                     b.HasIndex("SubconOrderId");
 
@@ -826,46 +821,13 @@ namespace Forge.Infrastructure.Migrations
                     b.Navigation("ToLocation");
                 });
 
-            modelBuilder.Entity("Forge.Domain.SubconOrder", b =>
-                {
-                    b.HasOne("Forge.Domain.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Forge.Domain.Subcontractor", "Subcontractor")
-                        .WithMany()
-                        .HasForeignKey("SubcontractorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("Subcontractor");
-                });
-
             modelBuilder.Entity("Forge.Domain.SubconOrderLine", b =>
                 {
-                    b.HasOne("Forge.Domain.Material", null)
-                        .WithMany()
-                        .HasForeignKey("ExpectedOutputMaterialId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Forge.Domain.Material", null)
-                        .WithMany()
-                        .HasForeignKey("MaterialId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Forge.Domain.SubconOrder", "SubconOrder")
+                    b.HasOne("Forge.Domain.SubconOrder", null)
                         .WithMany("Lines")
                         .HasForeignKey("SubconOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("SubconOrder");
                 });
 
             modelBuilder.Entity("Forge.Domain.ApprovalInstance", b =>

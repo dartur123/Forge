@@ -150,5 +150,98 @@ public class ForgeDbContext : DbContext
                     .WithMany()
                     .HasForeignKey(ad => ad.DecidedByUserId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Subcontractor>()
+                    .Property(subcon => subcon.IsActive)
+                    .HasDefaultValue(true);
+
+        modelBuilder.Entity<Subcontractor>()
+                    .HasQueryFilter(subcon => subcon.IsActive);
+
+        modelBuilder.Entity<PurchaseOrder>()
+                    .HasOne<Supplier>()
+                    .WithMany()
+                    .HasForeignKey(po => po.SupplierId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PurchaseOrder>()
+                    .Property(po => po.ExchangeRate)
+                    .HasPrecision(18, 6);
+
+        modelBuilder.Entity<PurchaseOrder>()
+                    .Property(po => po.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+        modelBuilder.Entity<PurchaseOrderLine>()
+                    .HasOne(pol=>pol.PurchaseOrder)
+                    .WithMany(po => po.Lines)
+                    .HasForeignKey(pol => pol.PurchaseOrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PurchaseOrderLine>()
+                    .HasOne<Material>()
+                    .WithMany()
+                    .HasForeignKey(pol => pol.MaterialId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PurchaseOrderLine>()
+                    .Property(pol => pol.Quantity)
+                    .HasPrecision(18, 4);
+
+        modelBuilder.Entity<PurchaseOrderLine>()
+                    .Property(pol => pol.UnitCostForeign)
+                    .HasPrecision(18, 4);
+
+        modelBuilder.Entity<SubconOrder>()
+            .HasOne(so => so.Subcontractor)
+            .WithMany()
+            .HasForeignKey(so => so.SubcontractorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SubconOrder>()
+                    .HasOne(so => so.CreatedByUser)
+                    .WithMany()
+                    .HasForeignKey(so => so.CreatedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SubconOrder>()
+                    .Property(so => so.ExchangeRate)
+                    .HasPrecision(18, 6);
+
+        modelBuilder.Entity<SubconOrder>()
+                    .Property(so => so.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+        modelBuilder.Entity<SubconOrderLine>()
+                    .HasOne(sol => sol.SubconOrder)
+                    .WithMany(so => so.Lines)
+                    .HasForeignKey(sol => sol.SubconOrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SubconOrderLine>()
+                    .HasOne<Material>()
+                    .WithMany()
+                    .HasForeignKey(sol => sol.MaterialId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SubconOrderLine>()
+                    .HasOne<Material>()
+                    .WithMany()
+                    .HasForeignKey(sol => sol.ExpectedOutputMaterialId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SubconOrderLine>()
+                    .Property(sol => sol.QuantitySent)
+                    .HasPrecision(18, 4);
+
+        modelBuilder.Entity<SubconOrderLine>()
+                    .Property(sol => sol.ExpectedOutputQuantity)
+                    .HasPrecision(18, 4);
+
+        modelBuilder.Entity<SubconOrderLine>()
+                    .Property(sol => sol.ProcessingCostForeign)
+                    .HasPrecision(18, 4);
     }
 }

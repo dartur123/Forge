@@ -1,11 +1,38 @@
-﻿namespace Forge.Domain;
+﻿using Forge.Domain.Exceptions;
+
+namespace Forge.Domain;
 
 public class PurchaseOrderLine
 {
-    public int Id { get; set; }
-    public int PurchaseOrderId { get; set; }
-    public int MaterialId { get; set; }
-    public decimal Quantity { get; set; }
-    public decimal UnitCostForeign { get; set; }
-    public decimal UnitCostPhp { get; set; }
+    protected PurchaseOrderLine() { }
+    public int Id { get; private set; }
+    public int PurchaseOrderId { get; private set; }
+    public int MaterialId { get; private set; }
+    public decimal Quantity { get; private set; }
+    public decimal UnitCostForeign { get; private set; }
+    public PurchaseOrder PurchaseOrder { get; private set; } = null!;
+    public static PurchaseOrderLine Create(int purchaseOrderId, int materialId, decimal quantity, decimal unitCostForeign)
+    {
+        if (quantity <= 0)
+            throw new DomainException("Quantity must be greater than zero.");
+        if (unitCostForeign < 0)
+            throw new DomainException("Unit cost in foreign currency cannot be negative.");
+        return new PurchaseOrderLine
+        {
+            PurchaseOrderId = purchaseOrderId,
+            MaterialId = materialId,
+            Quantity = quantity,
+            UnitCostForeign = unitCostForeign
+        };
+    }
+    public void Update(int materialId, decimal quantity, decimal unitCostForeign)
+    {
+        if (quantity <= 0)
+            throw new DomainException("Quantity must be greater than zero.");
+        if (unitCostForeign < 0)
+            throw new DomainException("Unit cost in foreign currency cannot be negative.");
+        MaterialId = materialId;
+        Quantity = quantity;
+        UnitCostForeign = unitCostForeign;
+    }
 }
