@@ -1,9 +1,15 @@
 <Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path="cd.yml" />
+    <File Path="ci.yml" />
+  </Folder>
   <Folder Name="/Docs/" />
   <Folder Name="/Docs/architecture/">
     <File Path="../../../Downloads/ai-layer-design.md" />
   </Folder>
   <Folder Name="/Solution Items/">
+    <File Path="../../../Downloads/PROGRESS.md" />
     <File Path=".editorconfig" />
     <File Path="docker-compose.yml" />
     <File Path="Dockerfile" />
