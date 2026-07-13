@@ -22,6 +22,70 @@ namespace Forge.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Forge.Domain.ApprovalDecision", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApprovalInstanceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DecidedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DecidedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Decision")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SequenceOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovalInstanceId");
+
+                    b.HasIndex("DecidedByUserId");
+
+                    b.ToTable("ApprovalDecisions");
+                });
+
+            modelBuilder.Entity("Forge.Domain.ApprovalInstance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CurrentSequenceOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EntityId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ApprovalInstances");
+                });
+
             modelBuilder.Entity("Forge.Domain.ApprovalRule", b =>
                 {
                     b.Property<int>("Id")
@@ -30,8 +94,14 @@ namespace Forge.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("EntityType")
-                        .HasColumnType("integer");
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<int>("RequiredRoleId")
                         .HasColumnType("integer");
@@ -39,10 +109,9 @@ namespace Forge.Infrastructure.Migrations
                     b.Property<int>("SequenceOrder")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("ThresholdAmountPhp")
-                        .HasColumnType("numeric");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("RequiredRoleId");
 
                     b.ToTable("ApprovalRules");
                 });
@@ -55,16 +124,22 @@ namespace Forge.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("FinishedGoodMaterialId")
-                        .HasColumnType("integer");
+                    b.Property<string>("BillOfMaterialStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
-                    b.Property<int>("Version")
+                    b.Property<int>("OutputMaterialId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OutputMaterialId");
 
                     b.ToTable("BillOfMaterials");
                 });
@@ -83,14 +158,8 @@ namespace Forge.Infrastructure.Migrations
                     b.Property<int>("MaterialId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ParentLineId")
-                        .HasColumnType("integer");
-
                     b.Property<decimal>("Quantity")
                         .HasColumnType("numeric");
-
-                    b.Property<int>("SourceType")
-                        .HasColumnType("integer");
 
                     b.Property<string>("UnitOfMeasure")
                         .IsRequired()
@@ -100,7 +169,7 @@ namespace Forge.Infrastructure.Migrations
 
                     b.HasIndex("BillOfMaterialsId");
 
-                    b.HasIndex("ParentLineId");
+                    b.HasIndex("MaterialId");
 
                     b.ToTable("BillOfMaterialsLines");
                 });
@@ -129,48 +198,6 @@ namespace Forge.Infrastructure.Migrations
                     b.ToTable("CompanySettings");
                 });
 
-            modelBuilder.Entity("Forge.Domain.Enums.PurchaseOrder", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("ExchangeRate")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("OrderNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SupplierId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("TotalAmountForeign")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("TotalAmountPhp")
-                        .HasColumnType("numeric");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PurchaseOrders");
-                });
-
             modelBuilder.Entity("Forge.Domain.Location", b =>
                 {
                     b.Property<int>("Id")
@@ -178,6 +205,11 @@ namespace Forge.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<int>("LocationTypeId")
                         .HasColumnType("integer");
@@ -246,9 +278,6 @@ namespace Forge.Infrastructure.Migrations
                     b.Property<int>("MaterialId")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("numeric");
-
                     b.Property<DateTime>("ReceivedDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -257,9 +286,6 @@ namespace Forge.Infrastructure.Migrations
 
                     b.Property<int?>("SupplierId")
                         .HasColumnType("integer");
-
-                    b.Property<decimal>("TotalCostPhp")
-                        .HasColumnType("numeric");
 
                     b.Property<decimal>("UnitCostPhp")
                         .HasColumnType("numeric");
@@ -311,6 +337,50 @@ namespace Forge.Infrastructure.Migrations
                     b.ToTable("Materials");
                 });
 
+            modelBuilder.Entity("Forge.Domain.PurchaseOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("ExchangeRate")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<bool>("IsSentToSupplier")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("PurchaseOrders");
+                });
+
             modelBuilder.Entity("Forge.Domain.PurchaseOrderLine", b =>
                 {
                     b.Property<int>("Id")
@@ -326,15 +396,16 @@ namespace Forge.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<decimal>("Quantity")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
 
                     b.Property<decimal>("UnitCostForeign")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("UnitCostPhp")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MaterialId");
 
                     b.HasIndex("PurchaseOrderId");
 
@@ -381,7 +452,7 @@ namespace Forge.Infrastructure.Migrations
                     b.Property<int?>("ReceivedByUserId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ReleasedByUserId")
+                    b.Property<int?>("ReleasedByUserId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
@@ -433,25 +504,29 @@ namespace Forge.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<decimal>("ExchangeRate")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<bool>("IsSentToSupplier")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("SubcontractorId")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("TotalAmountForeign")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("TotalAmountPhp")
-                        .HasColumnType("numeric");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("SubcontractorId");
 
                     b.ToTable("SubconOrders");
                 });
@@ -468,24 +543,28 @@ namespace Forge.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<decimal>("ExpectedOutputQuantity")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
 
-                    b.Property<int>("MaterialSentId")
+                    b.Property<int>("MaterialId")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("ProcessingCostForeign")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("ProcessingCostPhp")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
 
                     b.Property<decimal>("QuantitySent")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
 
                     b.Property<int>("SubconOrderId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ExpectedOutputMaterialId");
+
+                    b.HasIndex("MaterialId");
 
                     b.HasIndex("SubconOrderId");
 
@@ -512,6 +591,11 @@ namespace Forge.Infrastructure.Migrations
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -591,18 +675,64 @@ namespace Forge.Infrastructure.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Forge.Domain.ApprovalDecision", b =>
+                {
+                    b.HasOne("Forge.Domain.ApprovalInstance", "ApprovalInstance")
+                        .WithMany("Decisions")
+                        .HasForeignKey("ApprovalInstanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Forge.Domain.User", "DecidedByUser")
+                        .WithMany()
+                        .HasForeignKey("DecidedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApprovalInstance");
+
+                    b.Navigation("DecidedByUser");
+                });
+
+            modelBuilder.Entity("Forge.Domain.ApprovalRule", b =>
+                {
+                    b.HasOne("Forge.Domain.Role", "RequiredRole")
+                        .WithMany()
+                        .HasForeignKey("RequiredRoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("RequiredRole");
+                });
+
+            modelBuilder.Entity("Forge.Domain.BillOfMaterials", b =>
+                {
+                    b.HasOne("Forge.Domain.Material", "OutputMaterial")
+                        .WithMany()
+                        .HasForeignKey("OutputMaterialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OutputMaterial");
+                });
+
             modelBuilder.Entity("Forge.Domain.BillOfMaterialsLine", b =>
                 {
-                    b.HasOne("Forge.Domain.BillOfMaterials", null)
+                    b.HasOne("Forge.Domain.BillOfMaterials", "BillOfMaterials")
                         .WithMany("Lines")
                         .HasForeignKey("BillOfMaterialsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Forge.Domain.BillOfMaterialsLine", null)
-                        .WithMany("Children")
-                        .HasForeignKey("ParentLineId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                    b.HasOne("Forge.Domain.Material", "Material")
+                        .WithMany()
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BillOfMaterials");
+
+                    b.Navigation("Material");
                 });
 
             modelBuilder.Entity("Forge.Domain.Location", b =>
@@ -647,13 +777,30 @@ namespace Forge.Infrastructure.Migrations
                     b.Navigation("Supplier");
                 });
 
+            modelBuilder.Entity("Forge.Domain.PurchaseOrder", b =>
+                {
+                    b.HasOne("Forge.Domain.Supplier", null)
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Forge.Domain.PurchaseOrderLine", b =>
                 {
-                    b.HasOne("Forge.Domain.Enums.PurchaseOrder", null)
+                    b.HasOne("Forge.Domain.Material", null)
+                        .WithMany()
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Forge.Domain.PurchaseOrder", "PurchaseOrder")
                         .WithMany("Lines")
                         .HasForeignKey("PurchaseOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("PurchaseOrder");
                 });
 
             modelBuilder.Entity("Forge.Domain.StockMovement", b =>
@@ -677,8 +824,7 @@ namespace Forge.Infrastructure.Migrations
                     b.HasOne("Forge.Domain.User", "ReleasedByUser")
                         .WithMany()
                         .HasForeignKey("ReleasedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Forge.Domain.Location", "ToLocation")
                         .WithMany()
@@ -696,26 +842,54 @@ namespace Forge.Infrastructure.Migrations
                     b.Navigation("ToLocation");
                 });
 
+            modelBuilder.Entity("Forge.Domain.SubconOrder", b =>
+                {
+                    b.HasOne("Forge.Domain.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Forge.Domain.Subcontractor", "Subcontractor")
+                        .WithMany()
+                        .HasForeignKey("SubcontractorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Subcontractor");
+                });
+
             modelBuilder.Entity("Forge.Domain.SubconOrderLine", b =>
                 {
-                    b.HasOne("Forge.Domain.SubconOrder", null)
+                    b.HasOne("Forge.Domain.Material", null)
+                        .WithMany()
+                        .HasForeignKey("ExpectedOutputMaterialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Forge.Domain.Material", null)
+                        .WithMany()
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Forge.Domain.SubconOrder", "SubconOrder")
                         .WithMany("Lines")
                         .HasForeignKey("SubconOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("SubconOrder");
+                });
+
+            modelBuilder.Entity("Forge.Domain.ApprovalInstance", b =>
+                {
+                    b.Navigation("Decisions");
                 });
 
             modelBuilder.Entity("Forge.Domain.BillOfMaterials", b =>
-                {
-                    b.Navigation("Lines");
-                });
-
-            modelBuilder.Entity("Forge.Domain.BillOfMaterialsLine", b =>
-                {
-                    b.Navigation("Children");
-                });
-
-            modelBuilder.Entity("Forge.Domain.Enums.PurchaseOrder", b =>
                 {
                     b.Navigation("Lines");
                 });
@@ -728,6 +902,11 @@ namespace Forge.Infrastructure.Migrations
             modelBuilder.Entity("Forge.Domain.Material", b =>
                 {
                     b.Navigation("Lots");
+                });
+
+            modelBuilder.Entity("Forge.Domain.PurchaseOrder", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Forge.Domain.SubconOrder", b =>

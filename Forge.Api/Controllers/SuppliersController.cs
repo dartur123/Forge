@@ -1,8 +1,8 @@
-﻿using Forge.Api.DTOs.Suppliers;
-using Forge.Domain;
-using Forge.Infrastructure;
+﻿using Forge.Application.Exceptions;
+using Forge.Application.Interfaces;
+using Forge.Application.Requests;
+using Forge.Application.Responses;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 
 namespace Forge.Api.Controllers;
@@ -11,80 +11,67 @@ namespace Forge.Api.Controllers;
 [Route("api/[controller]")]
 public class SuppliersController : ControllerBase
 {
-    private readonly ForgeDbContext _context;
+    private readonly ISupplierService _supplierService;
 
-    public SuppliersController(ForgeDbContext context)
+    public SuppliersController(ISupplierService supplierService)
     {
-        _context = context;
+        _supplierService = supplierService;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<SupplierResponse>>> GetAll()
+    public async Task<ActionResult<List<SupplierResult>>> GetAll()
     {
-        var suppliers = await _context.Suppliers.ToListAsync();
-        return Ok(suppliers.Select(ToResponse).ToList());
+        return await _supplierService.GetAllSuppliersAsync();
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<SupplierResponse>> GetById(int id)
+    public async Task<ActionResult<SupplierResult>> GetById(int id)
     {
-        var supplier = await _context.Suppliers.FindAsync(id);
-        if (supplier is null)
-            return NotFound();
-        return Ok(ToResponse(supplier));
+        try
+        {
+            return await _supplierService.GetSupplierAsync(id);
+        }
+        catch(NotFoundException nfe)
+        {
+            return NotFound(nfe.Message);
+        }
     }
 
     [HttpPost]
-    public async Task<ActionResult<SupplierResponse>> Create(CreateSupplierRequest request)
+    public async Task<ActionResult<SupplierResult>> Create(PostSupplierRequest request)
     {
-        var supplier = new Supplier
-        {
-            Name = request.Name,
-            Currency = request.Currency,
-            ContactPerson = request.ContactPerson,
-            ContactEmail = request.ContactEmail,
-            ContactPhone = request.ContactPhone
-        };
-        _context.Suppliers.Add(supplier);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = supplier.Id }, ToResponse(supplier));
+        var createdSupplier = await _supplierService.CreateSupplierAsync(request);
+
+        return CreatedAtAction(nameof(GetById), new { id = createdSupplier.Id }, createdSupplier);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, UpdateSupplierRequest request)
+    public async Task<IActionResult> Update(int id, PostSupplierRequest request)
     {
-        var supplier = await _context.Suppliers.FindAsync(id);
-        if (supplier is null)
-            return NotFound();
-        supplier.Name = request.Name;
-        supplier.Currency = request.Currency;
-        supplier.ContactPerson = request.ContactPerson;
-        supplier.ContactEmail = request.ContactEmail;
-        supplier.ContactPhone = request.ContactPhone;
-        await _context.SaveChangesAsync();
-        return NoContent();
+        try
+        {
+            var updatedSupplier = await _supplierService.UpdateSupplierAsync(id, request);
+
+            return NoContent();
+        }
+        catch(NotFoundException nfe)
+        {
+            return NotFound(nfe.Message);
+        }
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var supplier = await _context.Suppliers.FindAsync(id);
-        if (supplier is null)
-            return NotFound();
-        supplier.IsActive = false;
-        await _context.SaveChangesAsync();
-        return NoContent();
+        try
+        {
+            await _supplierService.DeactivateSupplierAsync(id);
+            return NoContent();
+        }
+        catch (NotFoundException nfe)
+        {
+            return NotFound(nfe.Message);
+        }
     }
-
-    private static SupplierResponse ToResponse(Supplier supplier) => new()
-    {
-        Id = supplier.Id,
-        Name = supplier.Name,
-        Currency = supplier.Currency,
-        ContactPhone = supplier.ContactPhone,
-        ContactPerson = supplier.ContactPerson,
-        ContactEmail = supplier.ContactEmail,
-        IsActive = supplier.IsActive
-    };
 }
 

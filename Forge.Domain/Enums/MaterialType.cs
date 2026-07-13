@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Forge.Domain.Enums
+namespace Forge.Domain.Enums;
+
+public enum MaterialType
 {
-    public enum MaterialType
-    {
-        Raw,
-        WorkInProgress,
-        FinishedGood
-    }
+    Raw,
+    WorkInProgress,
+    FinishedGood
 }

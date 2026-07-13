@@ -1,38 +1,45 @@
 # Forge
 
-A workflow-adaptive inventory & procurement system 
-for Philippine SME manufacturers.
+![CI](https://github.com/dartur123/Forge/actions/workflows/ci.yml/badge.svg)
 
-## The Problem
-Manufacturing companies abandon their ERP systems 
-because the software forces them to change their 
-process — instead of the other way around.
+A workflow-adaptive inventory & procurement system for Philippine SME manufacturers.
 
-## The Solution
-Forge bends to the company's workflow, not the 
-other way around. Configurable approval rules, 
-natural-language queries, and an AI procurement 
-agent that respects how *your* company actually works.
+## Why
 
-## Tech Stack
-- ASP.NET Core Web API (.NET 10)
-- EF Core (coming Week 2)
-- Azure (coming Phase 2)
-- Azure OpenAI + RAG (coming Phase 3)
-- Microsoft Agent Framework (coming Phase 4)
+Most ERP rollouts in small manufacturing shops die the same way: the software
+demands the company change its process to fit the system. People quietly go
+back to spreadsheets, and the ERP becomes expensive shelfware.
 
-## Domain Model
-- Material (with lot/batch tracking)
-- Supplier & Subcontractor
-- Location (Warehouse, Production Floor, FG Storage)
-- Lot (batch tracking with PHP costing)
-- Stock Movement (append-only ledger)
-- Purchase Order + Lines (with multi-currency for overseas)
-- Subcon Order + Lines (with multi-currency for overseas)
-- Bill of Materials (recursive, multi-level)
-- Approval Rules (configurable per company)
-- Company Settings (costing method, base currency)
-- Users + Roles
+Forge starts from the opposite assumption — the system bends to the company's
+workflow, not the other way around. Configurable approval rules now; natural-
+language queries and an AI procurement agent later, all built to respect how
+each company actually operates.
+
+## Tech
+
+- ASP.NET Core Web API (.NET 10), Clean Architecture (Domain / Application / Infrastructure / API)
+- EF Core + PostgreSQL
+- Docker — full stack runs with one `docker compose up`
+- Azure Container Registry + Container Apps
+- CI on GitHub Actions: restore, build, integration tests on every push to develop
+- xUnit + Testcontainers — tests run against real PostgreSQL, not in-memory fakes
+
+Planned: Azure OpenAI + RAG, then an agent layer via Microsoft Agent Framework.
+
+## Domain
+
+Material (lot/batch tracked) · Supplier · Subcontractor · Location ·
+Lot (PHP costing) · Stock Movement (append-only ledger) ·
+Purchase Order · Subcon Order · Bill of Materials (multi-level) ·
+Approval Rules (per-company) · Company Settings · Users + Roles
 
 ## Status
-🚧 Phase 1 — Backend in progress
+
+**Backend — in active development**
+
+- 16-entity domain model, factory pattern + guarded invariants throughout
+- PO / Subcon / BOM refactor complete (status machines, immutable approved BOMs)
+- StockLedgerService with atomic transactions and row-level locking
+- Role-based authorization on approval steps
+- Integration test suite on Testcontainers
+- Deployed to Azure Container Apps (CI pipeline green; cloud database next)

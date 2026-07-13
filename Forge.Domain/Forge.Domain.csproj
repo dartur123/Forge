@@ -6,12 +6,5 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="Enums\ApprovableEntityType.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="a\" />
-  </ItemGroup>
 
 </Project>

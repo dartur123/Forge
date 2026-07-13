@@ -1,43 +1,35 @@
 ### Get all materials
 GET {{Forge.Api_HostAddress}}/api/materials
 
-### Create a material with description
-POST {{Forge.Api_HostAddress}}/api/materials
-Content-Type: application/json
-
-{
-  "sku": "RM-001",
-  "name": "Steel Sheet 2mm",
-  "description": "Sample Description",
-  "type": 0,
-  "unitOfMeasure": "kg"
-}
-
-### Create a material without description
-POST {{Forge.Api_HostAddress}}/api/materials
-Content-Type: application/json
-
-{
-  "sku": "RM-001",
-  "name": "Steel Sheet 2mm",
-  "description": null,
-  "type": 0,
-  "unitOfMeasure": "kg"
-}
-
-### Get material by id
+### Get material by ID
 GET {{Forge.Api_HostAddress}}/api/materials/1
 
-### Get material by material type
-GET {{Forge.Api_HostAddress}}/api/materials/by-type/0
+### Get materials by type
+GET {{Forge.Api_HostAddress}}/api/materials/by-type/Raw
 
-### Try to create invalid material
+### Create material
 POST {{Forge.Api_HostAddress}}/api/materials
 Content-Type: application/json
 
 {
-  "sku": "",
-  "name": "",
-  "type": 0,
-  "unitOfMeasure": ""
+  "sku": "MAT-001",
+  "name": "Cold Rolled Steel",
+  "type": "Raw",
+  "description": "Used for fastener production",
+  "unitOfMeasure": "kg"
 }
+
+### Update material
+PUT {{Forge.Api_HostAddress}}/api/materials/1
+Content-Type: application/json
+
+{
+  "sku": "MAT-001",
+  "name": "Cold Rolled Steel Updated",
+  "type": "Raw",
+  "description": "Updated description",
+  "unitOfMeasure": "kg"
+}
+
+### Deactivate material
+DELETE {{Forge.Api_HostAddress}}/api/materials/1

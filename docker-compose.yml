@@ -11,5 +11,17 @@ services:
     volumes:
       - forge_pg_data:/var/lib/postgresql/data
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: forge-api
+    environment:
+      ConnectionStrings__ForgeDb: "Host=postgres;Port=5432;Database=forge_db;Username=forge_user;Password=forge_dev_password"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
 volumes:
   forge_pg_data:

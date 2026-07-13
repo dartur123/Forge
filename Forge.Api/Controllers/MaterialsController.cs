@@ -1,9 +1,9 @@
-﻿using Forge.Api.DTOs.Materials;
-using Forge.Domain;
+﻿using Forge.Application.Exceptions;
+using Forge.Application.Interfaces;
+using Forge.Application.Requests;
+using Forge.Application.Responses;
 using Forge.Domain.Enums;
-using Forge.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Forge.Api.Controllers;
 
@@ -11,97 +11,74 @@ namespace Forge.Api.Controllers;
 [Route("api/[controller]")]
 public class MaterialsController : ControllerBase
 {
-    private readonly ForgeDbContext _context;
+    private readonly IMaterialService _materialService;
 
-    public MaterialsController(ForgeDbContext context)
+    public MaterialsController(IMaterialService materialService)
     {
-        _context = context;
+        _materialService = materialService;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<MaterialResponse>>> GetAll()
+    public async Task<ActionResult<List<MaterialResult>>> GetAll()
     {
-        var materials = await _context.Materials.ToListAsync();
-        return Ok(materials.Select(ToResponse).ToList());
+        return await _materialService.GetAllMaterialsAsync();
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<MaterialResponse>> GetById(int id)
+    public async Task<ActionResult<MaterialResult>> GetById(int id)
     {
-        var material = await _context.Materials.FindAsync(id);
-        if (material is null)
-            return NotFound();
-
-        return Ok(ToResponse(material));
+        try
+        {
+            return await _materialService.GetMaterialAsync(id);
+        }
+        catch(NotFoundException nfe)
+        {
+            return NotFound(nfe.Message);
+        }
     }
 
     [HttpGet("by-type/{type}")]
-    public async Task<ActionResult<List<MaterialResponse>>> GetByType(MaterialType type)
+    public async Task<ActionResult<List<MaterialResult>>> GetByType(MaterialType type)
     {
-        var filtered = await _context.Materials
-            .Where(m => m.Type == type)
-            .ToListAsync();
-
-        return Ok(filtered.Select(ToResponse).ToList());
+        return await _materialService.GetMaterialByTypeAsync(type);
     }
 
     [HttpPost]
-    public async Task<ActionResult<MaterialResponse>> Create(CreateMaterialRequest request)
+    public async Task<ActionResult<MaterialResult>> Create(PostMaterialRequest request)
     {
-        var material = new Material
-        {
-            Sku = request.Sku,
-            Name = request.Name,
-            Type = request.Type,
-            Description = request.Description,
-            UnitOfMeasure = request.UnitOfMeasure
-        };
-
-        _context.Materials.Add(material);
-        await _context.SaveChangesAsync();
+        var createdMaterial = await _materialService.CreateMaterialAsync(request);
 
         return CreatedAtAction(nameof(GetById),
-            new { id = material.Id }, ToResponse(material));
+            new { id = createdMaterial.Id }, createdMaterial);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, CreateMaterialRequest request)
+    public async Task<IActionResult> Update(int id, PostMaterialRequest request)
     {
-        var existing = await _context.Materials.FindAsync(id);
-        if (existing is null)
-            return NotFound();
+        try
+        {
+            var updatedMaterial = await _materialService.UpdateMaterialAsync(id, request);
 
-        existing.Sku = request.Sku;
-        existing.Name = request.Name;
-        existing.Type = request.Type;
-        existing.Description = request.Description;
-        existing.UnitOfMeasure = request.UnitOfMeasure;
-
-        await _context.SaveChangesAsync();
-        return NoContent();
+            return NoContent();
+        }
+        catch(NotFoundException nfe)
+        {
+            return NotFound(nfe.Message);
+        }
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var material = await _context.Materials.FindAsync(id);
-        if (material is null)
-            return NotFound();
+        try
+        {
+            await _materialService.DeactivateMaterialAsync(id);
 
-        material.IsActive = false;
-        await _context.SaveChangesAsync();
-
-        return NoContent();
+            return NoContent();
+        }
+        catch(NotFoundException nfe)
+        {
+            return NotFound(nfe.Message);
+        }
     }
-
-    private static MaterialResponse ToResponse(Material material) => new()
-    {
-        Id = material.Id,
-        Sku = material.Sku,
-        Name = material.Name,
-        Type = material.Type.ToString(),
-        Description = material.Description,
-        UnitOfMeasure = material.UnitOfMeasure,
-        IsActive = material.IsActive
-    };
 }

@@ -1,5 +1,4 @@
 ﻿using Forge.Domain;
-using Forge.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Forge.Infrastructure;
@@ -27,83 +26,11 @@ public class ForgeDbContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<CompanySettings> CompanySettings { get; set; }
+    public DbSet<ApprovalInstance> ApprovalInstances { get; set; }
+    public DbSet<ApprovalDecision> ApprovalDecisions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<BillOfMaterialsLine>()
-                    .HasOne<BillOfMaterialsLine>()
-                    .WithMany(line => line.Children)
-                    .HasForeignKey(line => line.ParentLineId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<Location>()
-                    .HasOne(l => l.LocationType)
-                    .WithMany(lt => lt.Locations)
-                    .HasForeignKey(l => l.LocationTypeId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<LocationType>()
-                    .Property(lt => lt.IsActive)
-                    .HasDefaultValue(true);
-
-        modelBuilder.Entity<Lot>()
-                    .HasOne(l => l.Material)
-                    .WithMany(m => m.Lots)
-                    .HasForeignKey(l => l.MaterialId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<Lot>()
-                    .HasOne(l => l.Supplier)
-                    .WithMany(s => s.Lots)
-                    .HasForeignKey(l => l.SupplierId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<Lot>()
-                    .HasOne(l => l.CurrentLocation)
-                    .WithMany()
-                    .HasForeignKey(l => l.CurrentLocationId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<Material>()
-                    .Property(m => m.IsActive)
-                    .HasDefaultValue(true);
-
-        modelBuilder.Entity<Lot>()
-                    .Property(l => l.IsActive)
-                    .HasDefaultValue(true);
-
-        modelBuilder.Entity<Supplier>()
-                    .Property(s => s.IsActive)
-                    .HasDefaultValue(true);
-
-        modelBuilder.Entity<StockMovement>()
-    .HasOne(sm => sm.Lot)
-    .WithMany()
-    .HasForeignKey(sm => sm.LotId)
-    .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<StockMovement>()
-            .HasOne(sm => sm.FromLocation)
-            .WithMany()
-            .HasForeignKey(sm => sm.FromLocationId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<StockMovement>()
-            .HasOne(sm => sm.ToLocation)
-            .WithMany()
-            .HasForeignKey(sm => sm.ToLocationId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<StockMovement>()
-            .HasOne(sm => sm.ReleasedByUser)
-            .WithMany()
-            .HasForeignKey(sm => sm.ReleasedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<StockMovement>()
-            .HasOne(sm => sm.ReceivedByUser)
-            .WithMany()
-            .HasForeignKey(sm => sm.ReceivedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ForgeDbContext).Assembly);
     }
 }
