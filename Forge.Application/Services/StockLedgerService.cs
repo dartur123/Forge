@@ -34,6 +34,19 @@ public class StockLedgerService : IStockLedgerService
         }
     }
 
+
+    /// <summary>
+    /// Saves the inventory movement to the database within an existing transaction. This method should be called only when a transaction is already in progress.
+    /// </summary>
+    /// <param name="request">
+    /// Contains the details of the stock movement to be saved, including the lot ID, quantity, movement type, transaction date, user IDs for release and receipt, job reference, and location IDs.
+    /// </param>
+    /// <returns>
+    /// Returns a <see cref="StockMovementResult"/> object containing the details of the saved stock movement.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// Occurs if the method is called outside of an existing transaction, if the quantity is less than or equal to zero, if the specified lot does not exist, or if there is insufficient stock for a decrease movement.
+    /// </exception>
     public async Task<StockMovementResult> PostMovementWithinTransactionAsync(PostStockMovementRequest request)
     {
         if (_context.Database.CurrentTransaction is null)
