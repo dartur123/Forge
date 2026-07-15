@@ -33,16 +33,57 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      name: "CD"
+on:
+  push:
+    branches:
+      - main
+jobs:
+  "build-and-deploy":
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Build Docker image"
+        run: docker build -t forgeacrdct2026.azurecr.io/forge-api:latest .
+
+      - name: "Log in to ACR"
+        uses: docker/login-action@v3
+        with:
+          registry: forgeacrdct2026.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: "Push image to ACR"
+        run: docker push forgeacrdct2026.azurecr.io/forge-api:latest
+
+      - name: "Login to Azure"
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: "Setup .NET"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
       - name: "Install EF tool"
-        run: dotnet tool install --global dotnet-ef
+        run: |
+          dotnet tool install --global dotnet-ef
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
       - name: "Restore dependencies"
-        run: dotnet restore Forge.Infrastructure/Forge.Infrastructure.csproj
+        run: dotnet restore Forge.slnx
 
       - name: "Run migrations"
         run: dotnet ef database update --project Forge.Infrastructure/Forge.Infrastructure.csproj --startup-project Forge.Api/Forge.Api.csproj
         env:
           ConnectionStrings__ForgeDb: ${{ secrets.AZURE_DB_CONNECTION_STRING }}
+
+      - name: "Update Container App"
+        run: az containerapp update --name forge-api --resource-group forge-rg --image forgeacrdct2026.azurecr.io/forge-api:latest
+
 
       - name: "Update Container App"
         run: az containerapp update --name forge-api --resource-group forge-rg --image forgeacrdct2026.azurecr.io/forge-api:latest
