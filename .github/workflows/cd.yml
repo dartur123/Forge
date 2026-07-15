@@ -36,6 +36,9 @@ jobs:
       - name: "Install EF tool"
         run: dotnet tool install --global dotnet-ef
 
+      - name: "Restore dependencies"
+        run: dotnet restore Forge.Infrastructure/Forge.Infrastructure.csproj
+
       - name: "Run migrations"
         run: dotnet ef database update --project Forge.Infrastructure/Forge.Infrastructure.csproj --startup-project Forge.Api/Forge.Api.csproj
         env:
@@ -43,6 +46,3 @@ jobs:
 
       - name: "Update Container App"
         run: az containerapp update --name forge-api --resource-group forge-rg --image forgeacrdct2026.azurecr.io/forge-api:latest
-
-      
-
