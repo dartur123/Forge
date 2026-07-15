@@ -28,6 +28,21 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: "Setup .NET"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: "Install EF tool"
+        run: dotnet tool install --global dotnet-ef
+
+      - name: "Run migrations"
+        run: dotnet ef database update --project Forge.Infrastructure/Forge.Infrastructure.csproj --startup-project Forge.Api/Forge.Api.csproj
+        env:
+          ConnectionStrings__ForgeDb: ${{ secrets.AZURE_DB_CONNECTION_STRING }}
+
       - name: "Update Container App"
         run: az containerapp update --name forge-api --resource-group forge-rg --image forgeacrdct2026.azurecr.io/forge-api:latest
+
+      
 
