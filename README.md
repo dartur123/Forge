@@ -42,4 +42,4 @@ Approval Rules (per-company) · Company Settings · Users + Roles
 - StockLedgerService with atomic transactions and row-level locking
 - Role-based authorization on approval steps
 - Integration test suite on Testcontainers
-- Deployed to Azure Container Apps (CI pipeline green; cloud database next)
+- Live on Azure Container Apps (PostgreSQL connected; CD pipeline auto-deploys and migrates on push to main)
