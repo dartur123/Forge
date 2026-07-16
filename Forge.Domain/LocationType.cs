@@ -27,5 +27,7 @@ public class LocationType
         Name = name;
     }
 
+    public void Reactivate() => IsActive = true;
+
     public void Deactivate() => IsActive = false;
 }

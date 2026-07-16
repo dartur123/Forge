@@ -16,7 +16,7 @@ public class SubconOrder
     public int CreatedByUserId { get; private set; }
     public User CreatedByUser { get; private set; } = null!;
     public DateTime CreatedDate { get; private set; } = DateTime.UtcNow;
-    public bool IsSentToSupplier { get; private set; } = false;
+    public bool IsSentToSubcontractor { get; private set; } = false;
 
     public List<SubconOrderLine> Lines { get; private set; } = new();
 
@@ -101,19 +101,19 @@ public class SubconOrder
     }
     public void Cancel()
     {
-        if (Status == SubconOrderStatus.Submitted || (Status == SubconOrderStatus.Approved && !IsSentToSupplier))
+        if (Status == SubconOrderStatus.Submitted || (Status == SubconOrderStatus.Approved && !IsSentToSubcontractor))
         {
             Status = SubconOrderStatus.Cancelled;
         }
         else
-            throw new DomainException("Only submitted or approved (not sent to supplier) subcon orders can be cancelled.");
+            throw new DomainException("Only submitted or approved (not sent to subcontractor) subcon orders can be cancelled.");
     }
-    public void MarkAsSentToSupplier()
+    public void MarkAsSentToSubcontractor()
     {
         if (Status == SubconOrderStatus.Approved)
-            IsSentToSupplier = true;
+            IsSentToSubcontractor = true;
         else
-            throw new DomainException("Only approved subcon orders can be marked as sent to supplier.");
+            throw new DomainException("Only approved subcon orders can be marked as sent to subcontractor.");
     }
 
     public void StartEditing()

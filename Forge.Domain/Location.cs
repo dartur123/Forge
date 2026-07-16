@@ -34,5 +34,7 @@ public class Location
         LocationTypeId = locationTypeId;
     }
 
+    public void Reactivate() => IsActive = true;
+
     public void Deactivate() => IsActive = false;
 }
