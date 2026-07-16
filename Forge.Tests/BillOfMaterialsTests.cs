@@ -72,7 +72,7 @@ public class BillOfMaterialsTests : IClassFixture<DatabaseFixture>
     public void LineCreate_WithInvalidQuantity_Throws(decimal quantity)
     {
         Assert.Throws<DomainException>(
-            () => BillOfMaterialsLine.Create(billOfMaterialsId: 1, materialId: 2, quantity, unitOfMeasure: "kg"));
+            () => BillOfMaterialsLine.Create(materialId: 2, quantity, unitOfMeasure: "kg"));
     }
 
     [Theory]
@@ -81,7 +81,7 @@ public class BillOfMaterialsTests : IClassFixture<DatabaseFixture>
     public void LineCreate_WithEmptyUnitOfMeasure_Throws(string unitOfMeasure)
     {
         Assert.Throws<DomainException>(
-            () => BillOfMaterialsLine.Create(billOfMaterialsId: 1, materialId: 2, quantity: 5, unitOfMeasure));
+            () => BillOfMaterialsLine.Create(materialId: 2, quantity: 5, unitOfMeasure));
     }
 
     [Theory]
@@ -90,7 +90,7 @@ public class BillOfMaterialsTests : IClassFixture<DatabaseFixture>
     public void LineCreate_WithInvalidMaterialId_Throws(int materialId)
     {
         Assert.Throws<DomainException>(
-            () => BillOfMaterialsLine.Create(billOfMaterialsId: 1, materialId, quantity: 5, unitOfMeasure: "kg"));
+            () => BillOfMaterialsLine.Create(materialId, quantity: 5, unitOfMeasure: "kg"));
     }
 
     [Fact]
