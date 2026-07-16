@@ -52,5 +52,8 @@ public class Lot
         ReceivedDate = receivedDate;
         ExpiryDate = expiryDate;
     }
+
+    public void Reactivate() => IsActive = true;
+
     public void Deactivate() => IsActive = false;
 }
