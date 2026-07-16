@@ -12,18 +12,17 @@ public class BillOfMaterialsLine
     public Material Material { get; private set; } = null!;
     public decimal Quantity { get; private set; }
     public string UnitOfMeasure { get; private set; } = string.Empty;
-    public static BillOfMaterialsLine Create(int billOfMaterialsId, int materialId, decimal quantity, string unitOfMeasure)
+    public static BillOfMaterialsLine Create(int materialId, decimal quantity, string unitOfMeasure)
     {
-        if(materialId <= 0)
+        if (materialId <= 0)
             throw new DomainException("Material id is required.");
         if (string.IsNullOrWhiteSpace(unitOfMeasure))
             throw new DomainException("Unit of measure is required.");
         if (quantity <= 0)
             throw new DomainException("Quantity must be greater than 0.");
-        
+
         return new BillOfMaterialsLine
         {
-            BillOfMaterialsId = billOfMaterialsId,
             MaterialId = materialId,
             Quantity = quantity,
             UnitOfMeasure = unitOfMeasure

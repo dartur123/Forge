@@ -11,7 +11,7 @@ public class PurchaseOrderLine
     public decimal Quantity { get; private set; }
     public decimal UnitCostForeign { get; private set; }
     public PurchaseOrder PurchaseOrder { get; private set; } = null!;
-    public static PurchaseOrderLine Create(int purchaseOrderId, int materialId, decimal quantity, decimal unitCostForeign)
+    public static PurchaseOrderLine Create(int materialId, decimal quantity, decimal unitCostForeign)
     {
         if (quantity <= 0)
             throw new DomainException("Quantity must be greater than zero.");
@@ -19,7 +19,6 @@ public class PurchaseOrderLine
             throw new DomainException("Unit cost in foreign currency cannot be negative.");
         return new PurchaseOrderLine
         {
-            PurchaseOrderId = purchaseOrderId,
             MaterialId = materialId,
             Quantity = quantity,
             UnitCostForeign = unitCostForeign

@@ -34,7 +34,7 @@ public class BillOfMaterials
         if (OutputMaterialId == materialId)
             throw new DomainException("Output material cannot be used as input material.");
 
-        var line = BillOfMaterialsLine.Create(Id, materialId, quantity, unitOfMeasure);
+        var line = BillOfMaterialsLine.Create(materialId, quantity, unitOfMeasure);
         Lines.Add(line);
         if (BillOfMaterialStatus == BillOfMaterialStatus.Rejected)
             BillOfMaterialStatus = BillOfMaterialStatus.Draft;
