@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - develop
+  pull_request:
+    branches:
+      - develop
 jobs:
   "build-and-test":
     runs-on: ubuntu-latest
@@ -19,4 +22,7 @@ jobs:
         run: dotnet restore
 
       - name: "Build"
-        run: dotnet build
+        run: dotnet build --no-restore
+
+      - name: "Test"
+        run: dotnet test --no-build
