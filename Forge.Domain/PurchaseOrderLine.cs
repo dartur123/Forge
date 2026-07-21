@@ -9,7 +9,7 @@ public class PurchaseOrderLine
     public int PurchaseOrderId { get; private set; }
     public int MaterialId { get; private set; }
     public decimal Quantity { get; private set; }
-    public decimal UnitCostForeign { get; private set; }
+    public decimal UnitCostForeign { get; private set; } 
     public PurchaseOrder PurchaseOrder { get; private set; } = null!;
     public static PurchaseOrderLine Create(int materialId, decimal quantity, decimal unitCostForeign)
     {
