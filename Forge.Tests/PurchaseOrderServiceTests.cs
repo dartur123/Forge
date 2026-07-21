@@ -17,7 +17,7 @@ public class PurchaseOrderServiceTests : IClassFixture<DatabaseFixture>
 
     private PurchaseOrderService CreateService()
     {
-        return new PurchaseOrderService(_fixture.DbContext);
+        return new PurchaseOrderService(_fixture.DbContext, new ApprovalService(_fixture.DbContext));
     }
 
     private async Task<Supplier> SeedSupplierAsync(string name)
