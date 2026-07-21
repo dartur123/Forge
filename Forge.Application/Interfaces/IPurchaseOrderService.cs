@@ -8,4 +8,5 @@ public interface IPurchaseOrderService
     Task<PurchaseOrderResult> CreateAsync(PostPurchaseOrderRequest request);
     Task<List<PurchaseOrderResult>> GetAllAsync(bool includeLines);
     Task<PurchaseOrderResult> GetByIdAsync(int purchaseOrderId);
+    Task SubmitAsync(int purchaseOrderId);
 }
