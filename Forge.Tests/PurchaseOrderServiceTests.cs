@@ -1,8 +1,12 @@
+using Forge.Application.Exceptions;
+using Forge.Application.Interfaces;
 using Forge.Application.Requests;
+using Forge.Application.Responses;
 using Forge.Application.Services;
 using Forge.Domain;
 using Forge.Domain.Enums;
 using Forge.Domain.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Forge.Tests;
 
@@ -34,6 +38,78 @@ public class PurchaseOrderServiceTests : IClassFixture<DatabaseFixture>
         _fixture.DbContext.Materials.Add(material);
         await _fixture.DbContext.SaveChangesAsync();
         return material;
+    }
+
+    private async Task<Role> SeedRoleAsync(string name)
+    {
+        var role = new Role { Name = name };
+        _fixture.DbContext.Roles.Add(role);
+        await _fixture.DbContext.SaveChangesAsync();
+        return role;
+    }
+
+    private async Task<User> SeedUserAsync(string email, int roleId)
+    {
+        var user = new User
+        {
+            Name = "Test User",
+            Email = email,
+            PasswordHash = "placeholder",
+            RoleId = roleId,
+            IsActive = true
+        };
+        _fixture.DbContext.Users.Add(user);
+        await _fixture.DbContext.SaveChangesAsync();
+        return user;
+    }
+
+    // All purchase orders share the single hard-coded entity type "PurchaseOrder" (see
+    // PurchaseOrderService.ApproveAsync/RejectAsync/SubmitAsync), so the approval rule for it must
+    // be seeded exactly once per test run and reused, rather than seeded fresh per test like
+    // ApprovalServiceTests does with its per-test entity type names.
+    private async Task<Role> EnsurePurchaseOrderApprovalRoleAsync()
+    {
+        var existingRule = await _fixture.DbContext.ApprovalRules
+            .FirstOrDefaultAsync(r => r.EntityType == nameof(PurchaseOrder) && r.IsActive);
+
+        if (existingRule != null)
+        {
+            return await _fixture.DbContext.Roles.FirstAsync(r => r.Id == existingRule.RequiredRoleId);
+        }
+
+        var role = await SeedRoleAsync("PO-Approver");
+        var approvalService = new ApprovalService(_fixture.DbContext);
+        await approvalService.CreateRuleAsync(new PostApprovalRuleRequest
+        {
+            EntityType = nameof(PurchaseOrder),
+            RequiredRoleId = role.Id,
+            SequenceOrder = 1
+        });
+
+        return role;
+    }
+
+    private async Task<PurchaseOrderResult> CreateAndSubmitPurchaseOrderAsync(string orderNumber, IPurchaseOrderService service)
+    {
+        var supplier = await SeedSupplierAsync($"Supplier-{orderNumber}");
+        var material = await SeedMaterialAsync($"SKU-{orderNumber}");
+
+        var created = await service.CreateAsync(new PostPurchaseOrderRequest
+        {
+            OrderNumber = orderNumber,
+            SupplierId = supplier.Id,
+            Currency = "USD",
+            ExchangeRate = 1,
+            CreatedByUserId = 1,
+            Lines = new List<PostPurchaseOrderLineRequest>
+            {
+                new() { MaterialId = material.Id, Quantity = 1, UnitCostForeign = 10 }
+            }
+        });
+
+        await service.SubmitAsync(created.Id);
+
+        return await service.GetByIdAsync(created.Id);
     }
 
     // ---------- CreateAsync ----------
@@ -327,5 +403,197 @@ public class PurchaseOrderServiceTests : IClassFixture<DatabaseFixture>
 
         Assert.Contains(all, po => po.Id == createdA.Id);
         Assert.Contains(all, po => po.Id == createdB.Id);
+    }
+
+    // ---------- SubmitAsync ----------
+
+    [Fact]
+    public async Task Submit_ShouldThrowNotFound_WhenPurchaseOrderDoesNotExist()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.SubmitAsync(999999));
+    }
+
+    [Fact]
+    public async Task Submit_ShouldThrow_WhenPurchaseOrderIsNotDraft()
+    {
+        await EnsurePurchaseOrderApprovalRoleAsync();
+        var service = CreateService();
+        var submitted = await CreateAndSubmitPurchaseOrderAsync("PO-SUBMIT-TWICE", service);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SubmitAsync(submitted.Id));
+    }
+
+    [Fact]
+    public async Task Submit_ShouldTransitionToSubmitted_AndCreateApprovalInstance()
+    {
+        await EnsurePurchaseOrderApprovalRoleAsync();
+        var service = CreateService();
+
+        var submitted = await CreateAndSubmitPurchaseOrderAsync("PO-SUBMIT-OK", service);
+
+        Assert.Equal(PurchaseOrderStatus.Submitted, submitted.Status);
+
+        var approvalService = new ApprovalService(_fixture.DbContext);
+        var instance = await approvalService.GetInstanceAsyncByEntityNameId(nameof(PurchaseOrder), submitted.Id);
+        Assert.Equal(ApprovalStatus.Pending, instance.Status);
+    }
+
+    // ---------- ApproveAsync ----------
+
+    [Fact]
+    public async Task Approve_ShouldThrowNotFound_WhenPurchaseOrderDoesNotExist()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.ApproveAsync(999999, 1, "ok"));
+    }
+
+    [Fact]
+    public async Task Approve_ShouldThrow_WhenPurchaseOrderIsNotSubmitted()
+    {
+        var supplier = await SeedSupplierAsync("Supplier-Approve-NotSubmitted");
+        var service = CreateService();
+
+        var draft = await service.CreateAsync(new PostPurchaseOrderRequest
+        {
+            OrderNumber = "PO-APPROVE-DRAFT",
+            SupplierId = supplier.Id,
+            CreatedByUserId = 1
+        });
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.ApproveAsync(draft.Id, 1, null));
+    }
+
+    [Fact]
+    public async Task Approve_ShouldThrowForbidden_WhenUserLacksRequiredRole()
+    {
+        await EnsurePurchaseOrderApprovalRoleAsync();
+        var wrongRole = await SeedRoleAsync("PO-Approve-WrongRole");
+        var wrongUser = await SeedUserAsync("po-approve-wrongrole@forge.com", wrongRole.Id);
+
+        var service = CreateService();
+        var submitted = await CreateAndSubmitPurchaseOrderAsync("PO-APPROVE-FORBIDDEN", service);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() => service.ApproveAsync(submitted.Id, wrongUser.Id, null));
+
+        var stillSubmitted = await service.GetByIdAsync(submitted.Id);
+        Assert.Equal(PurchaseOrderStatus.Submitted, stillSubmitted.Status);
+    }
+
+    [Fact]
+    public async Task Approve_ShouldMarkPurchaseOrderApproved_WhenApprovalStepCompletes()
+    {
+        var approverRole = await EnsurePurchaseOrderApprovalRoleAsync();
+        var approver = await SeedUserAsync("po-approve-success@forge.com", approverRole.Id);
+
+        var service = CreateService();
+        var submitted = await CreateAndSubmitPurchaseOrderAsync("PO-APPROVE-OK", service);
+
+        await service.ApproveAsync(submitted.Id, approver.Id, "Looks good");
+
+        var approved = await service.GetByIdAsync(submitted.Id);
+        Assert.Equal(PurchaseOrderStatus.Approved, approved.Status);
+    }
+
+    [Fact]
+    public async Task Approve_ShouldThrowNotFound_WhenNoApprovalInstanceExists()
+    {
+        // A purchase order that reached Submitted without going through SubmitAsync (e.g. data
+        // seeded directly) has no approval instance behind it — that must surface as a lookup
+        // failure rather than silently approving.
+        var supplier = await SeedSupplierAsync("Supplier-Approve-NoInstance");
+        var material = await SeedMaterialAsync("SKU-Approve-NoInstance");
+        var service = CreateService();
+
+        var created = await service.CreateAsync(new PostPurchaseOrderRequest
+        {
+            OrderNumber = "PO-APPROVE-NOINSTANCE",
+            SupplierId = supplier.Id,
+            CreatedByUserId = 1,
+            Lines = new List<PostPurchaseOrderLineRequest>
+            {
+                new() { MaterialId = material.Id, Quantity = 1, UnitCostForeign = 10 }
+            }
+        });
+
+        var purchaseOrder = await _fixture.DbContext.PurchaseOrders.FirstAsync(po => po.Id == created.Id);
+        purchaseOrder.Submit();
+        await _fixture.DbContext.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.ApproveAsync(created.Id, 1, null));
+    }
+
+    // ---------- RejectAsync ----------
+
+    [Fact]
+    public async Task Reject_ShouldThrowNotFound_WhenPurchaseOrderDoesNotExist()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.RejectAsync(999999, 1, "not valid"));
+    }
+
+    [Fact]
+    public async Task Reject_ShouldThrow_WhenPurchaseOrderIsNotSubmitted()
+    {
+        var supplier = await SeedSupplierAsync("Supplier-Reject-NotSubmitted");
+        var service = CreateService();
+
+        var draft = await service.CreateAsync(new PostPurchaseOrderRequest
+        {
+            OrderNumber = "PO-REJECT-DRAFT",
+            SupplierId = supplier.Id,
+            CreatedByUserId = 1
+        });
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RejectAsync(draft.Id, 1, "no"));
+    }
+
+    [Fact]
+    public async Task Reject_ShouldThrowForbidden_WhenUserLacksRequiredRole()
+    {
+        await EnsurePurchaseOrderApprovalRoleAsync();
+        var wrongRole = await SeedRoleAsync("PO-Reject-WrongRole");
+        var wrongUser = await SeedUserAsync("po-reject-wrongrole@forge.com", wrongRole.Id);
+
+        var service = CreateService();
+        var submitted = await CreateAndSubmitPurchaseOrderAsync("PO-REJECT-FORBIDDEN", service);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() => service.RejectAsync(submitted.Id, wrongUser.Id, "Not allowed"));
+
+        var stillSubmitted = await service.GetByIdAsync(submitted.Id);
+        Assert.Equal(PurchaseOrderStatus.Submitted, stillSubmitted.Status);
+    }
+
+    [Fact]
+    public async Task Reject_ShouldThrowDomainException_WhenCommentMissing()
+    {
+        var approverRole = await EnsurePurchaseOrderApprovalRoleAsync();
+        var approver = await SeedUserAsync("po-reject-nocomment@forge.com", approverRole.Id);
+
+        var service = CreateService();
+        var submitted = await CreateAndSubmitPurchaseOrderAsync("PO-REJECT-NOCOMMENT", service);
+
+        await Assert.ThrowsAsync<DomainException>(() => service.RejectAsync(submitted.Id, approver.Id, null));
+
+        var stillSubmitted = await service.GetByIdAsync(submitted.Id);
+        Assert.Equal(PurchaseOrderStatus.Submitted, stillSubmitted.Status);
+    }
+
+    [Fact]
+    public async Task Reject_ShouldMarkPurchaseOrderRejected_WhenApprovalStepRejected()
+    {
+        var approverRole = await EnsurePurchaseOrderApprovalRoleAsync();
+        var approver = await SeedUserAsync("po-reject-success@forge.com", approverRole.Id);
+
+        var service = CreateService();
+        var submitted = await CreateAndSubmitPurchaseOrderAsync("PO-REJECT-OK", service);
+
+        await service.RejectAsync(submitted.Id, approver.Id, "Missing budget approval");
+
+        var rejected = await service.GetByIdAsync(submitted.Id);
+        Assert.Equal(PurchaseOrderStatus.Rejected, rejected.Status);
     }
 }

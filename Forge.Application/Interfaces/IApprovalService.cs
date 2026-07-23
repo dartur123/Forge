@@ -12,7 +12,10 @@ public interface IApprovalService
     Task DeactivateRuleAsync(int ruleId);
     Task<ApprovalInstanceResult> StartApprovalAsync(string entityType, int entityId);
     Task<ApprovalInstanceResult> ApproveStepAsync(int instanceId, int userId, string? comment);
-    Task<ApprovalInstanceResult> RejectStepAsync(int instanceId, int userId, string comment);
+    Task<ApprovalInstanceResult> ApproveStepWithinTransactionAsync(int instanceId, int userId, string? comment);
+    Task<ApprovalInstanceResult> RejectStepAsync(int instanceId, int userId, string? comment);
+    Task<ApprovalInstanceResult> RejectStepWithinTransactionAsync(int instanceId, int userId, string? comment);
     Task<ApprovalInstanceResult> ResubmitAsync(int instanceId);
     Task<ApprovalInstanceResult> GetInstanceAsync(int instanceId);
+    Task<ApprovalInstanceResult> GetInstanceAsyncByEntityNameId(string entityType, int entityId);
 }
