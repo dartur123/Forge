@@ -2,6 +2,7 @@
 using Forge.Application.Requests;
 using Forge.Application.Services;
 using Forge.Domain;
+using Forge.Domain.Enums;
 using Forge.Domain.Exceptions;
 using Xunit;
 
@@ -154,7 +155,7 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
 
         var instance = await service.StartApprovalAsync("TestEntity-Start", 42);
 
-        Assert.Equal("Pending", instance.Status);
+        Assert.Equal(ApprovalStatus.Pending, instance.Status);
         Assert.Equal(1, instance.CurrentSequenceOrder);
         Assert.Equal("TestEntity-Start", instance.EntityType);
         Assert.Equal(42, instance.EntityId);
@@ -187,7 +188,7 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
 
         var updated = await service.ApproveStepAsync(instance.Id, supervisor.Id, "Looks good");
 
-        Assert.Equal("Pending", updated.Status);
+        Assert.Equal(ApprovalStatus.Pending, updated.Status);
         Assert.Equal(2, updated.CurrentSequenceOrder);
         Assert.Single(updated.Decisions);
         Assert.Equal("Approved", updated.Decisions[0].Decision);
@@ -206,7 +207,7 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
 
         var updated = await service.ApproveStepAsync(instance.Id, user.Id, null);
 
-        Assert.Equal("Approved", updated.Status);
+        Assert.Equal(ApprovalStatus.Approved, updated.Status);
     }
 
     [Fact]
@@ -242,7 +243,7 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
         await service.ApproveStepAsync(instance.Id, supervisor.Id, "Step 1 ok");
         var final = await service.ApproveStepAsync(instance.Id, manager.Id, "Step 2 ok");
 
-        Assert.Equal("Approved", final.Status);
+        Assert.Equal(ApprovalStatus.Approved, final.Status);
         Assert.Equal(2, final.Decisions.Count);
     }
 
@@ -270,7 +271,7 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
 
         var updated = await service.RejectStepAsync(instance.Id, user.Id, "Missing documents");
 
-        Assert.Equal("Rejected", updated.Status);
+        Assert.Equal(ApprovalStatus.Rejected, updated.Status);
         Assert.Single(updated.Decisions);
         Assert.Equal("Rejected", updated.Decisions[0].Decision);
         Assert.Equal("Missing documents", updated.Decisions[0].Comment);
@@ -305,6 +306,208 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.RejectStepAsync(instance.Id, user.Id, "Second rejection"));
+    }
+
+    [Fact]
+    public async Task RejectStep_ShouldThrowForbidden_WhenUserLacksRequiredRole()
+    {
+        var requiredRole = await SeedRoleAsync("RequiredRole-Reject");
+        var wrongRole = await SeedRoleAsync("WrongRole-Reject");
+        var user = await SeedUserAsync("userwithwrongrole-reject@gmail.com", wrongRole.Id);
+
+        await SeedRuleAsync("TestEntity-RejectForbidden", requiredRole.Id, 1);
+
+        var service = CreateService();
+        var instance = await service.StartApprovalAsync("TestEntity-RejectForbidden", 1);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            service.RejectStepAsync(instance.Id, user.Id, "Rejecting without the right role"));
+
+        var decisions = _fixture.DbContext.ApprovalDecisions.Where(d => d.ApprovalInstanceId == instance.Id);
+        Assert.Empty(decisions);
+
+        var fetched = await service.GetInstanceAsync(instance.Id);
+        Assert.Equal(ApprovalStatus.Pending, fetched.Status);
+    }
+
+    [Fact]
+    public async Task RejectStep_ShouldThrowForbidden_WhenUserDoesNotExist()
+    {
+        var role = await SeedRoleAsync("Supervisor-RejectNoUser");
+        await SeedRuleAsync("TestEntity-RejectNoUser", role.Id, 1);
+
+        var service = CreateService();
+        var instance = await service.StartApprovalAsync("TestEntity-RejectNoUser", 1);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            service.RejectStepAsync(instance.Id, 999999, "No such user"));
+    }
+
+    // ---------- ApproveStepWithinTransactionAsync / RejectStepWithinTransactionAsync ----------
+    // These back both the public ApproveStepAsync/RejectStepAsync (which wrap them in their own
+    // transaction) and PurchaseOrderService, which calls them directly inside its own transaction.
+    // They must therefore behave identically to the public methods without managing a transaction themselves.
+
+    [Fact]
+    public async Task ApproveStepWithinTransaction_ShouldThrowNotFound_WhenInstanceDoesNotExist()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.ApproveStepWithinTransactionAsync(999999, 1, null));
+    }
+
+    [Fact]
+    public async Task ApproveStepWithinTransaction_ShouldMarkApproved_WhenLastStep()
+    {
+        var role = await SeedRoleAsync("Supervisor-WithinTx-Approve");
+        var user = await SeedUserAsync("supervisor-withintx-approve@forge.com", role.Id);
+
+        await SeedRuleAsync("TestEntity-WithinTx-Approve", role.Id, 1);
+
+        var service = CreateService();
+        var instance = await service.StartApprovalAsync("TestEntity-WithinTx-Approve", 1);
+
+        var updated = await service.ApproveStepWithinTransactionAsync(instance.Id, user.Id, "Direct call");
+
+        Assert.Equal(ApprovalStatus.Approved, updated.Status);
+        Assert.Single(updated.Decisions);
+    }
+
+    [Fact]
+    public async Task ApproveStepWithinTransaction_ShouldThrowForbidden_WhenUserLacksRequiredRole()
+    {
+        var requiredRole = await SeedRoleAsync("RequiredRole-WithinTx");
+        var wrongRole = await SeedRoleAsync("WrongRole-WithinTx");
+        var user = await SeedUserAsync("userwithwrongrole-withintx@gmail.com", wrongRole.Id);
+
+        await SeedRuleAsync("TestEntity-WithinTx-Forbidden", requiredRole.Id, 1);
+
+        var service = CreateService();
+        var instance = await service.StartApprovalAsync("TestEntity-WithinTx-Forbidden", 1);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            service.ApproveStepWithinTransactionAsync(instance.Id, user.Id, null));
+    }
+
+    [Fact]
+    public async Task RejectStepWithinTransaction_ShouldThrowNotFound_WhenInstanceDoesNotExist()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.RejectStepWithinTransactionAsync(999999, 1, "not valid"));
+    }
+
+    [Fact]
+    public async Task RejectStepWithinTransaction_ShouldMarkRejected_AndRequireRole()
+    {
+        var role = await SeedRoleAsync("Supervisor-WithinTx-Reject");
+        var user = await SeedUserAsync("supervisor-withintx-reject@forge.com", role.Id);
+
+        await SeedRuleAsync("TestEntity-WithinTx-Reject", role.Id, 1);
+
+        var service = CreateService();
+        var instance = await service.StartApprovalAsync("TestEntity-WithinTx-Reject", 1);
+
+        var updated = await service.RejectStepWithinTransactionAsync(instance.Id, user.Id, "Direct reject");
+
+        Assert.Equal(ApprovalStatus.Rejected, updated.Status);
+        Assert.Single(updated.Decisions);
+    }
+
+    [Fact]
+    public async Task RejectStepWithinTransaction_ShouldThrowForbidden_WhenUserLacksRequiredRole()
+    {
+        var requiredRole = await SeedRoleAsync("RequiredRole-WithinTxReject");
+        var wrongRole = await SeedRoleAsync("WrongRole-WithinTxReject");
+        var user = await SeedUserAsync("userwithwrongrole-withintxreject@gmail.com", wrongRole.Id);
+
+        await SeedRuleAsync("TestEntity-WithinTx-RejectForbidden", requiredRole.Id, 1);
+
+        var service = CreateService();
+        var instance = await service.StartApprovalAsync("TestEntity-WithinTx-RejectForbidden", 1);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            service.RejectStepWithinTransactionAsync(instance.Id, user.Id, "Should not be allowed"));
+    }
+
+    [Fact]
+    public async Task RejectStepWithinTransaction_ShouldThrowDomainException_WhenCommentMissing()
+    {
+        var role = await SeedRoleAsync("Supervisor-WithinTxNoComment");
+        var user = await SeedUserAsync("supervisor-withintxnocomment@forge.com", role.Id);
+
+        await SeedRuleAsync("TestEntity-WithinTxNoComment", role.Id, 1);
+
+        var service = CreateService();
+        var instance = await service.StartApprovalAsync("TestEntity-WithinTxNoComment", 1);
+
+        await Assert.ThrowsAsync<DomainException>(() =>
+            service.RejectStepWithinTransactionAsync(instance.Id, user.Id, null));
+    }
+
+    // ---------- GetInstanceAsyncByEntityNameId ----------
+
+    [Fact]
+    public async Task GetInstanceByEntityNameId_ShouldThrowInvalidOperation_WhenEntityTypeIsEmpty()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.GetInstanceAsyncByEntityNameId("", 1));
+    }
+
+    [Fact]
+    public async Task GetInstanceByEntityNameId_ShouldThrowInvalidOperation_WhenEntityIdIsZero()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.GetInstanceAsyncByEntityNameId("TestEntity-ZeroId", 0));
+    }
+
+    [Fact]
+    public async Task GetInstanceByEntityNameId_ShouldThrowNotFound_WhenNoInstanceExists()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.GetInstanceAsyncByEntityNameId("TestEntity-ByNameIdMissing", 12345));
+    }
+
+    [Fact]
+    public async Task GetInstanceByEntityNameId_ShouldReturnMatchingInstance_WithDecisions()
+    {
+        var role = await SeedRoleAsync("Supervisor-ByNameId");
+        var user = await SeedUserAsync("supervisor-bynameid@forge.com", role.Id);
+
+        await SeedRuleAsync("TestEntity-ByNameId", role.Id, 1);
+
+        var service = CreateService();
+        var instance = await service.StartApprovalAsync("TestEntity-ByNameId", 777);
+        await service.ApproveStepAsync(instance.Id, user.Id, "Confirmed via lookup");
+
+        var fetched = await service.GetInstanceAsyncByEntityNameId("TestEntity-ByNameId", 777);
+
+        Assert.Equal(instance.Id, fetched.Id);
+        Assert.Equal("TestEntity-ByNameId", fetched.EntityType);
+        Assert.Equal(777, fetched.EntityId);
+        Assert.Equal(ApprovalStatus.Approved, fetched.Status);
+        Assert.Single(fetched.Decisions);
+    }
+
+    [Fact]
+    public async Task GetInstanceByEntityNameId_ShouldNotMatch_DifferentEntityId()
+    {
+        var role = await SeedRoleAsync("Supervisor-ByNameIdMismatch");
+        await SeedRuleAsync("TestEntity-ByNameIdMismatch", role.Id, 1);
+
+        var service = CreateService();
+        await service.StartApprovalAsync("TestEntity-ByNameIdMismatch", 1);
+
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.GetInstanceAsyncByEntityNameId("TestEntity-ByNameIdMismatch", 2));
     }
 
     // ---------- ResubmitAsync ----------
@@ -345,7 +548,7 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
 
         var resubmitted = await service.ResubmitAsync(instance.Id);
 
-        Assert.Equal("Pending", resubmitted.Status);
+        Assert.Equal(ApprovalStatus.Pending, resubmitted.Status);
         Assert.Equal(1, resubmitted.CurrentSequenceOrder);
     }
 
@@ -364,7 +567,7 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
         await service.ResubmitAsync(instance.Id);
         var final = await service.ApproveStepAsync(instance.Id, user.Id, "Approved on second round");
 
-        Assert.Equal("Approved", final.Status);
+        Assert.Equal(ApprovalStatus.Approved, final.Status);
         Assert.Equal(2, final.Decisions.Count);
         Assert.Contains(final.Decisions, d => d.Decision == "Rejected");
         Assert.Contains(final.Decisions, d => d.Decision == "Approved");
@@ -395,7 +598,7 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
 
         var fetched = await service.GetInstanceAsync(instance.Id);
 
-        Assert.Equal("Approved", fetched.Status);
+        Assert.Equal(ApprovalStatus.Approved, fetched.Status);
         Assert.Single(fetched.Decisions);
     }
 

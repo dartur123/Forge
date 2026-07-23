@@ -84,4 +84,72 @@ public class PurchaseOrderService : IPurchaseOrderService
             throw;
         }
     }
+
+    public async Task ApproveAsync(int purchaseOrderId, int userId, string? comment)
+    {
+        var searchedPurchaseOrder = await _context.PurchaseOrders
+            .FirstOrDefaultAsync(po => po.Id == purchaseOrderId);
+
+        if (searchedPurchaseOrder == null)
+            throw new NotFoundException("Purchase order not found.");
+
+        if (searchedPurchaseOrder.Status != PurchaseOrderStatus.Submitted)
+            throw new InvalidOperationException("Only submitted purchase orders can be approved.");
+
+        var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var approvalInstance = await _approvalService.GetInstanceAsyncByEntityNameId(nameof(PurchaseOrder), purchaseOrderId);
+            var approvalInstanceResult = await _approvalService.ApproveStepWithinTransactionAsync(approvalInstance.Id, userId, comment);
+            
+            if (approvalInstanceResult.Status == ApprovalStatus.Approved)
+            {
+                searchedPurchaseOrder.Approve();
+
+                await _context.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    public async Task RejectAsync(int purchaseOrderId, int userId, string? comment)
+    {
+        var searchedPurchaseOrder = await _context.PurchaseOrders
+            .FirstOrDefaultAsync(po => po.Id == purchaseOrderId);
+
+        if (searchedPurchaseOrder == null)
+            throw new NotFoundException("Purchase order not found.");
+
+        if (searchedPurchaseOrder.Status != PurchaseOrderStatus.Submitted)
+            throw new InvalidOperationException("Only submitted purchase orders can be rejected.");
+
+        var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var approvalInstance = await _approvalService.GetInstanceAsyncByEntityNameId(nameof(PurchaseOrder), purchaseOrderId);
+            var approvalInstanceResult = await _approvalService.RejectStepWithinTransactionAsync(approvalInstance.Id, userId, comment);
+
+            if (approvalInstanceResult.Status == ApprovalStatus.Rejected)
+            {
+                searchedPurchaseOrder.Reject();
+
+                await _context.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
 }
