@@ -525,6 +525,23 @@ public class PurchaseOrderServiceTests : IClassFixture<DatabaseFixture>
         await Assert.ThrowsAsync<NotFoundException>(() => service.ApproveAsync(created.Id, 1, null));
     }
 
+    [Fact]
+    public async Task Approve_ShouldThrow_WhenPurchaseOrderIsAlreadyApproved()
+    {
+        var approverRole = await EnsurePurchaseOrderApprovalRoleAsync();
+        var approver = await SeedUserAsync("po-approve-already@forge.com", approverRole.Id);
+
+        var service = CreateService();
+        var submitted = await CreateAndSubmitPurchaseOrderAsync("PO-APPROVE-ALREADY", service);
+
+        await service.ApproveAsync(submitted.Id, approver.Id, "First approval");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.ApproveAsync(submitted.Id, approver.Id, "Second approval"));
+
+        var stillApproved = await service.GetByIdAsync(submitted.Id);
+        Assert.Equal(PurchaseOrderStatus.Approved, stillApproved.Status);
+    }
+
     // ---------- RejectAsync ----------
 
     [Fact]
@@ -595,5 +612,22 @@ public class PurchaseOrderServiceTests : IClassFixture<DatabaseFixture>
 
         var rejected = await service.GetByIdAsync(submitted.Id);
         Assert.Equal(PurchaseOrderStatus.Rejected, rejected.Status);
+    }
+
+    [Fact]
+    public async Task Reject_ShouldThrow_WhenPurchaseOrderIsAlreadyRejected()
+    {
+        var approverRole = await EnsurePurchaseOrderApprovalRoleAsync();
+        var approver = await SeedUserAsync("po-reject-already@forge.com", approverRole.Id);
+
+        var service = CreateService();
+        var submitted = await CreateAndSubmitPurchaseOrderAsync("PO-REJECT-ALREADY", service);
+
+        await service.RejectAsync(submitted.Id, approver.Id, "First rejection");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RejectAsync(submitted.Id, approver.Id, "Second rejection"));
+
+        var stillRejected = await service.GetByIdAsync(submitted.Id);
+        Assert.Equal(PurchaseOrderStatus.Rejected, stillRejected.Status);
     }
 }
