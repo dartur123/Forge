@@ -400,7 +400,7 @@ public class ApprovalServiceTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
-    public async Task RejectStepWithinTransaction_ShouldMarkRejected_AndRequireRole()
+    public async Task RejectStepWithinTransaction_ShouldMarkRejected()
     {
         var role = await SeedRoleAsync("Supervisor-WithinTx-Reject");
         var user = await SeedUserAsync("supervisor-withintx-reject@forge.com", role.Id);
